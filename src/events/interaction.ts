@@ -4,25 +4,22 @@ import type {
     CommandInteractionOptionResolver,
 } from 'discord.js'
 import type { ToAPIApplicationCommandOptions } from '@discordjs/builders'
+import type { SlashCommandOption } from '../common/interactive'
 import { ApplicationCommandOptionType } from 'discord-api-types/v9'
-import type {
-    OptionType,
-    SlashCommandOption,
+import { getCommands } from '../common/commandUtil'
+import {
     SlashCommandBuilder,
     SlashCommandSubcommandGroupBuilder,
     SlashCommandSubcommandBuilder,
-} from '../common/interactor'
-import { getCommands } from '../common/commandUtil'
+} from '../common/interactive'
 
-type builder =
+type Builder =
     | SlashCommandBuilder
     | SlashCommandSubcommandGroupBuilder
     | SlashCommandSubcommandBuilder
 
-type option = SlashCommandOption<option> & { type: OptionType }
-
 type Interactive = {
-    builder: builder
+    builder: Builder
     children: InteractiveMap
 }
 
@@ -32,7 +29,13 @@ const interactiveMap: InteractiveMap = new Map()
 
 export async function load() {
     for (const slashCommand of await getCommands()) {
-        setinteractiveMap(interactiveMap, slashCommand)
+        if (
+            slashCommand instanceof SlashCommandBuilder ||
+            slashCommand instanceof SlashCommandSubcommandGroupBuilder ||
+            slashCommand instanceof SlashCommandSubcommandBuilder
+        ) {
+            setinteractiveMap(interactiveMap, slashCommand)
+        }
     }
 }
 
@@ -48,7 +51,7 @@ function isSubcommand(
     return option.toJSON().type === ApplicationCommandOptionType.Subcommand
 }
 
-function setinteractiveMap(interactiveMap: InteractiveMap, builder: builder) {
+function setinteractiveMap(interactiveMap: InteractiveMap, builder: Builder) {
     const children: InteractiveMap = new Map()
     interactiveMap.set(builder.name, { builder: builder, children })
     for (const option of builder.options) {
@@ -70,11 +73,7 @@ async function commandListener(interaction: CommandInteraction) {
     const { commandName } = interaction
     const subcommandGroupName = interaction.options.getSubcommandGroup(false)
     const subcommandName = interaction.options.getSubcommand(false)
-    let [interactive, commandPath] = getInteractive(
-        interactiveMap,
-        commandName,
-        '/'
-    )
+    let [interactive, commandPath] = getInteractive(interactiveMap, commandName)
     if (subcommandGroupName !== null) {
         void ([interactive, commandPath] = getInteractive(
             interactive.children,
@@ -93,10 +92,12 @@ async function commandListener(interaction: CommandInteraction) {
         | SlashCommandBuilder
         | SlashCommandSubcommandBuilder
     const options = Object.fromEntries(
-        (builder.options as option[]).map(({ name, required, type }) => [
-            name,
-            getInteractionOption(interaction.options, name, required, type),
-        ])
+        (builder.options as SlashCommandOption[]).map(
+            ({ name, required, type }) => [
+                name,
+                getInteractionOption(interaction.options, name, required, type),
+            ]
+        )
     )
     await builder.interactor?.(interaction, options)
 }
@@ -104,7 +105,7 @@ async function commandListener(interaction: CommandInteraction) {
 function getInteractive(
     interactiveMap: InteractiveMap,
     name: string,
-    commandPath: string
+    commandPath = '/'
 ): [Interactive, string] {
     const interactive = interactiveMap.get(name)
     commandPath = `${commandPath}${name}/`
@@ -118,7 +119,7 @@ function getInteractionOption(
     options: CommandInteractionOptionResolver,
     name: string,
     required: boolean,
-    type: OptionType
+    type: SlashCommandOption['type']
 ) {
     switch (type) {
         case ApplicationCommandOptionType.String:

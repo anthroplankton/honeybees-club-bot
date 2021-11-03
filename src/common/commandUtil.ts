@@ -55,6 +55,8 @@ export async function refresh(guildId: string, CommandNames: string[]) {
     try {
         console.log('Started refreshing application (/) commands.')
 
+        console.log(commandJSONs)
+
         await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
             body: commandJSONs,
         })
