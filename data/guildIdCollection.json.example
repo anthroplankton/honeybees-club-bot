@@ -1,0 +1,8 @@
+{
+  "name": "000000000000000000"
+}
+/*
+{
+  additionalProperties: { type: 'string', pattern: String.raw`\d{18}` }
+} 
+*/

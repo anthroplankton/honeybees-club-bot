@@ -1,0 +1,26 @@
+{
+  "h2o": [{ "role": "a" }, { "role": "b" }, { "role": "c", "emoji": "AGA_AN" }]
+}
+/*
+{
+  type: 'object',
+  required: [],
+  additionalProperties: {
+      type: 'array',
+      uniqueItem: true,
+      items: {
+          type: 'object',
+          required: ['role'],
+          properties: {
+              role: { type: 'string' },
+              emoji: {
+                  type: 'string',
+                  nullable: true,
+                  pattern: String.raw`[_0-9A-Za-z]`,
+              },
+          },
+          additionalProperties: false,
+      },
+  },
+}
+*/
