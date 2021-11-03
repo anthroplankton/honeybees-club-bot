@@ -1,0 +1,9 @@
+.git/
+.vscode/
+.legacy/
+node_modules/
+dist/
+db/
+data/
+.env
+.example

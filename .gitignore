@@ -1,0 +1,6 @@
+.vscode/
+.legacy/
+node_modules/
+dist/
+db/
+.env
