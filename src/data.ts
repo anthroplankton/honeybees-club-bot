@@ -16,6 +16,8 @@ export default data
 
 const schemas: { [K in keyof Data]: JSONSchemaType<Data[K]> } = {
     guildIdCollection: {
+        type: 'object',
+        required: [],
         additionalProperties: { type: 'string', pattern: String.raw`\d{18}` },
     } as JSONSchemaType<typeof data.guildIdCollection>,
     cafeteriaRolesCollection: {
@@ -23,7 +25,7 @@ const schemas: { [K in keyof Data]: JSONSchemaType<Data[K]> } = {
         required: [],
         additionalProperties: {
             type: 'array',
-            uniqueItem: true,
+            uniqueItems: true,
             items: {
                 type: 'object',
                 required: ['role'],
@@ -59,6 +61,8 @@ export async function load() {
             async dataName => await loadAndWatch(dataName as keyof Data)
         )
     )
+    console.log('Loading complete: data')
+    console.log(data)
 }
 export async function loadJSON<K extends keyof Data>(dataName: K) {
     const file = await fs.readFile(`./data/${dataName}.json`, 'utf8')
@@ -89,6 +93,7 @@ async function watch(dataName: keyof Data) {
     try {
         const watcher = fs.watch(dataName)
         for await (const event of watcher) {
+            console.log(`Reload JSON data: ${dataName}.`)
             if (event.eventType != 'change') {
                 continue
             }
