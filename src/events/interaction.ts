@@ -1,8 +1,4 @@
-import type {
-    Interaction,
-    CommandInteraction,
-    CommandInteractionOptionResolver,
-} from 'discord.js'
+import type { Interaction, CommandInteraction } from 'discord.js'
 import type { ToAPIApplicationCommandOptions } from '@discordjs/builders'
 import type { SlashCommandOption } from '../common/interactive'
 import { ApplicationCommandOptionType } from 'discord-api-types/v9'
@@ -37,6 +33,8 @@ export async function load() {
             setinteractiveMap(interactiveMap, slashCommand)
         }
     }
+    console.log('Loading complete: interaction')
+    console.log(interactiveMap)
 }
 
 function isSubcommandGroup(
@@ -116,7 +114,7 @@ function getInteractive(
 }
 
 function getInteractionOption(
-    options: CommandInteractionOptionResolver,
+    options: CommandInteraction['options'],
     name: string,
     required: boolean,
     type: SlashCommandOption['type']
