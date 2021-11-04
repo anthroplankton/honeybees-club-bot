@@ -2,6 +2,7 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { REST } from '@discordjs/rest'
 import { Routes } from 'discord-api-types/v9'
 import fs from 'fs/promises'
+import path from 'path'
 import { hasMixin } from 'ts-mixer'
 
 if (process.env.CLIENTID === undefined) {
@@ -14,11 +15,13 @@ const clientId = process.env.CLIENTID
 const token = process.env.TOKEN
 
 export async function getCommandNames() {
-    const files = await fs.readdir('./src/commands')
+    const files = await fs.readdir(path.resolve(__dirname, '../commands'))
     const getCommandNames = files
-        .map(file => file.match(/(.+)\.ts$/))
-        .filter((m): m is RegExpMatchArray => m !== null)
-        .map(m => m[1])
+        .map(file => path.parse(file))
+        .filter(
+            parsedPath => parsedPath.ext == '.ts' || parsedPath.ext == '.js'
+        )
+        .map(parsedPath => parsedPath.name)
     return getCommandNames
 }
 
@@ -30,7 +33,8 @@ export async function getCommands(CommandNames?: string[]) {
     CommandNames = CommandNames || (await getCommandNames())
     const commandModules = await Promise.all(
         CommandNames.map(
-            async CommandName => await import(`../commands/${CommandName}`)
+            async CommandName =>
+                await import(path.join('../commands', CommandName))
         )
     )
     return commandModules
@@ -55,13 +59,15 @@ export async function refresh(guildId: string, CommandNames: string[]) {
     try {
         console.log('Started refreshing application (/) commands.')
 
-        console.log(commandJSONs)
-
-        await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
-            body: commandJSONs,
-        })
+        const response = await rest.put(
+            Routes.applicationGuildCommands(clientId, guildId),
+            {
+                body: commandJSONs,
+            }
+        )
 
         console.log('Successfully reloaded application (/) commands.')
+        console.log(response)
     } catch (err) {
         console.error(err)
     }

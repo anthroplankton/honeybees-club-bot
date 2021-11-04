@@ -2,6 +2,7 @@ import type { Interaction, CommandInteraction } from 'discord.js'
 import type { ToAPIApplicationCommandOptions } from '@discordjs/builders'
 import type { SlashCommandOption } from '../common/interactive'
 import { ApplicationCommandOptionType } from 'discord-api-types/v9'
+import path from 'path'
 import { getCommands } from '../common/commandUtil'
 import {
     SlashCommandBuilder,
@@ -106,7 +107,7 @@ function getInteractive(
     commandPath = '/'
 ): [Interactive, string] {
     const interactive = interactiveMap.get(name)
-    commandPath = `${commandPath}${name}/`
+    commandPath = path.join(commandPath, name)
     if (interactive === undefined) {
         throw new Error(`The command "${commandPath}" does not bind.`)
     }

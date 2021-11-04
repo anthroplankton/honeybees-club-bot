@@ -1,7 +1,7 @@
 import { Client, Intents } from 'discord.js'
 import { createConnection } from 'typeorm'
 import * as data from './data'
-import * as interaction from '../src/events/interaction'
+import * as interaction from './events/interaction'
 
 if (process.env.TOKEN === undefined) {
     throw new Error('There is no token in environment.')

@@ -1,5 +1,6 @@
 import EventEmitter from 'events'
 import fs from 'fs/promises'
+import path from 'path'
 import Ajv, { JSONSchemaType, ValidateFunction } from 'ajv'
 
 const ajv = new Ajv()
@@ -65,7 +66,7 @@ export async function load() {
     console.log(data)
 }
 export async function loadJSON<K extends keyof Data>(dataName: K) {
-    const file = await fs.readFile(`./data/${dataName}.json`, 'utf8')
+    const file = await fs.readFile(getFilename(dataName), 'utf8')
     const json = JSON.parse(file)
     let validate = validates[dataName]
     if (validate === undefined) {
@@ -80,6 +81,10 @@ export async function loadJSON<K extends keyof Data>(dataName: K) {
     return (data[dataName] = json as Data[K])
 }
 
+function getFilename(dataName: keyof Data) {
+    return path.format({ dir: './data', name: dataName, ext: '.json' })
+}
+
 async function loadAndWatch(dataName: keyof Data) {
     try {
         await loadJSON(dataName)
@@ -91,9 +96,8 @@ async function loadAndWatch(dataName: keyof Data) {
 
 async function watch(dataName: keyof Data) {
     try {
-        const watcher = fs.watch(dataName)
+        const watcher = fs.watch(getFilename(dataName))
         for await (const event of watcher) {
-            console.log(`Reload JSON data: ${dataName}.`)
             if (event.eventType != 'change') {
                 continue
             }
