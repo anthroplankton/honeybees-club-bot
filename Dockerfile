@@ -4,11 +4,11 @@ FROM node:17.0-alpine AS builder
 WORKDIR /builder
 
 COPY ["package.json", "package-lock.json*", "./"]
-RUN npm install --only=dev
+RUN npm install --production=false
 
 COPY . .
 
-run npm run build
+RUN npm run build
 
 # app
 FROM node:17.0-alpine
@@ -18,10 +18,11 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY ["package.json", "package-lock.json*", "./"]
-RUN npm install
+RUN npm install --ignore-scripts
+RUN npm rebuild
 
 COPY ormconfig.js .
 
 COPY --from=builder ./builder/dist/ ./dist/
 
-CMD ["npm", "run", "bot"]
+CMD ["npm", "run", "start"]
