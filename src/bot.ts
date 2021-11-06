@@ -1,7 +1,7 @@
 import { Client, Intents } from 'discord.js'
 import { createConnection } from 'typeorm'
-import * as data from './data'
-import * as interaction from './events/interaction'
+import * as data from './common/dataManager'
+import * as interactionCreate from './events/interactionCreate'
 
 if (process.env.TOKEN === undefined) {
     throw new Error('There is no token in environment.')
@@ -15,18 +15,18 @@ process.on('SIGINT', () => {
     process.exit()
 })
 
-client.once('ready', c => {
-    console.log(`Ready! Logged in as ${c.user.tag}`)
-})
+client.once('ready', c => console.log(`Ready! Logged in as ${c.user.tag}`))
 
-client.on('interaction', interaction.listener)
+client.on('interactionCreate', i =>
+    interactionCreate.listener(i).catch(console.error)
+)
 
 void (async () => {
     await Promise.all([
         createConnection('default'),
         createConnection('survey'),
         data.load(),
-        interaction.load(),
+        interactionCreate.load(),
     ])
-    client.login(token)
+    await client.login(token)
 })()

@@ -1,10 +1,11 @@
 import prompts from 'prompts'
-import { loadJSON } from '../src/data'
-import { getCommandNames, refresh } from '../src/common/commandUtil'
+import { loadJSON } from '../src/common/dataManager'
+import { getCommandNames, refresh } from '../src/common/commandManager'
 
 void (async () => {
     const guildIdCollection = await loadJSON('guildIdCollection')
-    const { guildId, commandModules } = await prompts([
+    const commandNames = await getCommandNames()
+    const { guildId, pickedCommandNames } = await prompts([
         {
             type: 'select',
             name: 'guildId',
@@ -16,16 +17,14 @@ void (async () => {
             })),
         },
         {
-            type: 'multiselect',
-            name: 'commandModules',
+            type: commandNames.length ? 'multiselect' : null,
+            name: 'pickedCommandNames',
             message: 'Pick the command modules to deploy.',
-            choices: (
-                await getCommandNames()
-            ).map(commandModule => ({
-                title: commandModule,
-                value: commandModule,
+            choices: commandNames.map(commandName => ({
+                title: commandName,
+                value: commandName,
             })),
         },
     ])
-    await refresh(guildId, commandModules)
+    await refresh(guildId, pickedCommandNames)
 })()
