@@ -5,7 +5,8 @@ import Ajv, { JSONSchemaType, ValidateFunction } from 'ajv'
 
 const ajv = new Ajv()
 
-type Data = typeof data
+export type Data = typeof data
+export type DataName = keyof Data
 const data = {
     guildIdCollection: {} as Record<string, string>,
     cafeteriaRolesCollection: {} as Record<
@@ -14,8 +15,12 @@ const data = {
     >,
 }
 export default data
+export const dataNames: DataName[] = [
+    'guildIdCollection',
+    'cafeteriaRolesCollection',
+]
 
-const schemas: { [K in keyof Data]: JSONSchemaType<Data[K]> } = {
+const schemas: { [K in DataName]: JSONSchemaType<Data[K]> } = {
     guildIdCollection: {
         type: 'object',
         required: [],
@@ -44,11 +49,11 @@ const schemas: { [K in keyof Data]: JSONSchemaType<Data[K]> } = {
     } as JSONSchemaType<typeof data.cafeteriaRolesCollection>,
 }
 
-const validates: { [K in keyof Data]?: ValidateFunction<Data[K]> } = {}
+const validates: { [K in DataName]?: ValidateFunction<Data[K]> } = {}
 
 interface DataLoader {
-    emit<K extends keyof Data>(eventName: K, data: Data[K]): boolean
-    on<K extends keyof Data>(
+    emit<K extends DataName>(eventName: K, data: Data[K]): boolean
+    on<K extends DataName>(
         eventName: K,
         listener: (data: Data[K]) => void
     ): this
@@ -57,15 +62,11 @@ class DataLoader extends EventEmitter {}
 export const dataLoader: Pick<DataLoader, 'on' | 'emit'> = new DataLoader()
 
 export async function load() {
-    await Promise.all(
-        Object.keys(data).map(
-            async dataName => await loadAndWatch(dataName as keyof Data)
-        )
-    )
-    console.log('Loading complete: data')
+    await Promise.all(dataNames.map(loadAndWatch))
+    console.log('Loading completed: data')
     console.log(data)
 }
-export async function loadJSON<K extends keyof Data>(dataName: K) {
+export async function loadJSON<K extends DataName>(dataName: K) {
     const file = await fs.readFile(getFilename(dataName), 'utf8')
     const json = JSON.parse(file)
     let validate = validates[dataName]
@@ -81,20 +82,20 @@ export async function loadJSON<K extends keyof Data>(dataName: K) {
     return (data[dataName] = json as Data[K])
 }
 
-function getFilename(dataName: keyof Data) {
+function getFilename(dataName: DataName) {
     return path.format({ dir: './data', name: dataName, ext: '.json' })
 }
 
-async function loadAndWatch(dataName: keyof Data) {
+async function loadAndWatch(dataName: DataName) {
     try {
         await loadJSON(dataName)
     } catch (err) {
-        console.log(err)
+        console.error(err)
     }
     watch(dataName)
 }
 
-async function watch(dataName: keyof Data) {
+async function watch(dataName: DataName) {
     try {
         const watcher = fs.watch(getFilename(dataName))
         for await (const event of watcher) {
@@ -102,9 +103,9 @@ async function watch(dataName: keyof Data) {
                 continue
             }
             await loadJSON(dataName)
-            console.log(`Reload JSON data: ${dataName}.`)
+            console.log(`Reloaded JSON data: "${dataName}".`)
         }
     } catch (err) {
-        console.log(err)
+        console.error(err)
     }
 }
