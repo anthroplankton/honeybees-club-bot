@@ -1,32 +1,36 @@
+import type { Client, Snowflake } from 'discord.js'
 import EventEmitter from 'events'
 import fs from 'fs/promises'
 import path from 'path'
 import Ajv, { JSONSchemaType, ValidateFunction } from 'ajv'
 
+let djsClient: Client
 const ajv = new Ajv()
 
 export type Data = typeof data
 export type DataName = keyof Data
 const data = {
-    guildIdCollection: {} as Record<string, string>,
-    cafeteriaRolesCollection: {} as Record<
-        string,
-        { role: string; emoji?: string }[]
+    guildIdDict: {} as Partial<Record<string, Snowflake>>,
+    cafeteriaRolesDict: {} as Partial<
+        Record<string, { role: string; emoji?: string | null }[]>
     >,
 }
 export default data
-export const dataNames: DataName[] = [
-    'guildIdCollection',
-    'cafeteriaRolesCollection',
-]
+export const dataNames: DataName[] = ['guildIdDict', 'cafeteriaRolesDict']
 
+/* JSONSchemaType incorrectly requires optional properties to be nullable
+ * https://github.com/ajv-validator/ajv/issues/1664
+ */
+/* JSONSchemaType change nullable to be for nulls not undefined
+ * https://github.com/ajv-validator/ajv/pull/1701
+ */
 const schemas: { [K in DataName]: JSONSchemaType<Data[K]> } = {
-    guildIdCollection: {
+    guildIdDict: {
         type: 'object',
         required: [],
         additionalProperties: { type: 'string', pattern: String.raw`\d{18}` },
-    } as JSONSchemaType<typeof data.guildIdCollection>,
-    cafeteriaRolesCollection: {
+    } as JSONSchemaType<typeof data.guildIdDict>,
+    cafeteriaRolesDict: {
         type: 'object',
         required: [],
         additionalProperties: {
@@ -46,26 +50,62 @@ const schemas: { [K in DataName]: JSONSchemaType<Data[K]> } = {
                 additionalProperties: false,
             },
         },
-    } as JSONSchemaType<typeof data.cafeteriaRolesCollection>,
+    } as JSONSchemaType<typeof data.cafeteriaRolesDict>,
 }
 
 const validates: { [K in DataName]?: ValidateFunction<Data[K]> } = {}
 
-interface DataLoader {
-    emit<K extends DataName>(eventName: K, data: Data[K]): boolean
-    on<K extends DataName>(
-        eventName: K,
-        listener: (data: Data[K]) => void
-    ): this
-}
-class DataLoader extends EventEmitter {}
-export const dataLoader: Pick<DataLoader, 'on' | 'emit'> = new DataLoader()
+const isReadySet = new Set<DataName>()
 
-export async function load() {
+class DataEmitter extends EventEmitter {
+    constructor() {
+        super()
+        for (const dataName of dataNames) {
+            super.once(dataName, () => isReadySet.add(dataName))
+        }
+    }
+    private static wrap<K extends DataName>(
+        listener: (client: Client, data: Data[K]) => void
+    ) {
+        return async (client: Client, data: Data[K]) => {
+            try {
+                await listener(client, data)
+            } catch (err) {
+                client.emit('error', err as Error)
+            }
+        }
+    }
+    public isReady(dataName: DataName) {
+        return isReadySet.has(dataName)
+    }
+    public emit<K extends DataName>(eventName: K, data: Data[K]) {
+        return super.emit(eventName, djsClient, data)
+    }
+    public on<K extends DataName>(
+        eventName: K,
+        listener: (client: Client, data: Data[K]) => void
+    ) {
+        return super.on(eventName, DataEmitter.wrap(listener))
+    }
+    public once<K extends DataName>(
+        eventName: K,
+        listener: (client: Client, data: Data[K]) => void
+    ) {
+        return super.once(eventName, DataEmitter.wrap(listener))
+    }
+}
+export const dataEmitter: Pick<
+    DataEmitter,
+    'isReady' | 'emit' | 'on' | 'once'
+> = new DataEmitter()
+
+export async function load(client: Client) {
+    djsClient = client
     await Promise.all(dataNames.map(loadAndWatch))
     console.log('Loading completed: data')
     console.log(data)
 }
+
 export async function loadJSON<K extends DataName>(dataName: K) {
     const file = await fs.readFile(getFilename(dataName), 'utf8')
     const json = JSON.parse(file)
@@ -78,8 +118,9 @@ export async function loadJSON<K extends DataName>(dataName: K) {
     if (!validate(json)) {
         throw validate.errors
     }
-    dataLoader.emit(dataName, json as Data[K])
-    return (data[dataName] = json as Data[K])
+    data[dataName] = json as Data[K]
+    dataEmitter.emit(dataName, json as Data[K])
+    return json as Data[K]
 }
 
 function getFilename(dataName: DataName) {
@@ -91,6 +132,7 @@ async function loadAndWatch(dataName: DataName) {
         await loadJSON(dataName)
     } catch (err) {
         console.error(err)
+        dataEmitter.emit(dataName, data[dataName])
     }
     watch(dataName)
 }

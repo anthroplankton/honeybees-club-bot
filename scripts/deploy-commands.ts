@@ -3,7 +3,7 @@ import { loadJSON } from '../src/common/dataManager'
 import { getCommandNames, refresh } from '../src/common/commandManager'
 
 void (async () => {
-    const guildIdCollection = await loadJSON('guildIdCollection')
+    const guildIdDict = await loadJSON('guildIdDict')
     const commandNames = await getCommandNames()
     const { guildId, pickedCommandNames } = await prompts([
         {
@@ -11,7 +11,7 @@ void (async () => {
             name: 'guildId',
             message: 'Select a guild.',
             initial: 0,
-            choices: Object.entries(guildIdCollection).map(([key, id]) => ({
+            choices: Object.entries(guildIdDict).map(([key, id]) => ({
                 title: key,
                 value: id,
             })),

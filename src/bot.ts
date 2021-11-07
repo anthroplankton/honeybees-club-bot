@@ -1,6 +1,6 @@
 import { Client, Intents } from 'discord.js'
 import { createConnection } from 'typeorm'
-import * as data from './common/dataManager'
+import * as dataManager from './common/dataManager'
 import * as interactionCreate from './events/interactionCreate'
 
 if (process.env.TOKEN === undefined) {
@@ -15,18 +15,21 @@ process.on('SIGINT', () => {
     process.exit()
 })
 
+process.on('unhandledRejection', err => {
+    console.error('Unhandled promise rejection:', err)
+})
+
+client.on('error', console.error)
+
+client.on('interactionCreate', interactionCreate.listener)
+
 client.once('ready', c => console.log(`Ready! Logged in as ${c.user.tag}`))
 
-client.on('interactionCreate', i =>
-    interactionCreate.listener(i).catch(console.error)
-)
-
 void (async () => {
+    await Promise.all([createConnection('default'), createConnection('survey')])
     await Promise.all([
-        createConnection('default'),
-        createConnection('survey'),
-        data.load(),
-        interactionCreate.load(),
+        dataManager.load(client),
+        interactionCreate.load(client),
+        client.login(token),
     ])
-    await client.login(token)
 })()

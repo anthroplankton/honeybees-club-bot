@@ -1,4 +1,5 @@
 import type {
+    Client,
     Interaction,
     CommandInteraction,
     SelectMenuInteraction,
@@ -29,8 +30,10 @@ const commandBuilderMap: CommandBuilderMap = new Map()
 type SelectMenuCoverMap = Map<string, SelectMenuCover>
 const selectMenuCoverMap: SelectMenuCoverMap = new Map()
 
-export async function load() {
-    const { slashCommandBuilders, selectMenuCovers } = await getInteractive()
+export async function load(client: Client) {
+    const { slashCommandBuilders, selectMenuCovers } = await getInteractive(
+        client
+    )
     for (const builder of slashCommandBuilders) {
         setCommandBuilderMap(commandBuilderMap, builder)
     }
@@ -80,7 +83,7 @@ export async function listener(interaction: Interaction) {
                 content: 'There was an error while executing this command!',
                 ephemeral: interaction.ephemeral ?? true,
             }
-            await (interaction.replied && 0 * 0
+            await (interaction.replied
                 ? interaction.followUp(reply)
                 : interaction.reply(reply))
         } else if (interaction.isMessageComponent()) {
@@ -123,6 +126,7 @@ async function commandListener(interaction: CommandInteraction) {
             commandPath
         ))
     }
+    console.log(`Command interaction create: ${commandPath}`)
     const builder = node.builder as
         | SlashCommandBuilder
         | SlashCommandSubcommandBuilder
@@ -178,6 +182,7 @@ function getInteractionOption(
 
 async function selectMenuListener(interaction: SelectMenuInteraction) {
     const { customId } = interaction
+    console.log(`Select menu interaction create: ${customId}`)
     const cover = selectMenuCoverMap.get(customId)
     if (cover === undefined) {
         throw new Error(`The select menu "${customId}" does not bind.`)

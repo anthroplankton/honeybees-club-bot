@@ -4,6 +4,7 @@ import { REST } from '@discordjs/rest'
 import fs from 'fs/promises'
 import path from 'path'
 import { SlashCommandBuilder, SelectMenuCover } from '../common/interactive'
+import { Client } from 'discord.js'
 
 if (process.env.CLIENTID === undefined) {
     throw new Error('There is no client id in environment.')
@@ -24,25 +25,28 @@ export async function getCommandNames() {
         .map(parsedPath => parsedPath.name)
 }
 
-export async function getCommandModules(): Promise<Record<string, unknown>[]>
 export async function getCommandModules(
-    commandNames?: string[]
-): Promise<Record<string, unknown>[]>
-export async function getCommandModules(commandNames?: string[]) {
+    commandNames?: string[],
+    client?: Client
+) {
     commandNames = commandNames || (await getCommandNames())
     const commandModules = await Promise.all(
-        commandNames.map(
-            async commandName =>
-                await import(path.join('../commands', commandName))
-        )
+        commandNames.map(async commandName => {
+            const commandModule = await import(
+                path.join('../commands', commandName)
+            )
+            const { load } = commandModule
+            if (client !== undefined && typeof load === 'function') {
+                void (async () => {
+                    await load(client)
+                })().catch(err => client.emit('error', err))
+            }
+            return commandModule
+        })
     )
     return commandModules
 }
 
-export async function getCommands(): Promise<DjsSlashCommandBuilder[]>
-export async function getCommands(
-    commandNames?: string[]
-): Promise<DjsSlashCommandBuilder[]>
 export async function getCommands(commandNames?: string[]) {
     const commandModules = await getCommandModules(commandNames)
     return commandModules
@@ -55,16 +59,8 @@ export async function getCommands(commandNames?: string[]) {
         .map(([name, command]) => command.setName(command.name || name))
 }
 
-export async function getInteractive(): Promise<{
-    slashCommandBuilders: SlashCommandBuilder[]
-    selectMenuCovers: SelectMenuCover[]
-}>
-export async function getInteractive(commandNames?: string[]): Promise<{
-    slashCommandBuilders: SlashCommandBuilder[]
-    selectMenuCovers: SelectMenuCover[]
-}>
-export async function getInteractive(commandNames?: string[]) {
-    const commandModules = await getCommandModules(commandNames)
+export async function getInteractive(client?: Client, commandNames?: string[]) {
+    const commandModules = await getCommandModules(commandNames, client)
     const slashCommandBuilders: SlashCommandBuilder[] = []
     const selectMenuCovers: SelectMenuCover[] = []
     for (const [key, obj] of commandModules.map(Object.entries).flat()) {
