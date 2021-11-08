@@ -121,11 +121,12 @@ export type SlashCommandOption =
     | b.SlashCommandMentionableOption
     | b.SlashCommandNumberOption
 
-interface MessageSelectOption<T extends string> extends DjsMessageSelectOption {
+export interface MessageSelectOption<T extends string>
+    extends DjsMessageSelectOption {
     value: T
 }
 
-interface MessageSelectOptionData<T extends string>
+export interface MessageSelectOptionData<T extends string>
     extends DjsMessageSelectOptionData {
     value: T
 }

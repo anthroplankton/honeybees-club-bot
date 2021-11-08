@@ -1,5 +1,5 @@
 {
-  "h2o": [{ "role": "a" }, { "role": "b" }, { "role": "c", "emoji": "AGA_AN" }]
+  "guild key": [...{ "role": "role name",  "emoji": "emoji name" | undefined }]
 }
 /*
 {

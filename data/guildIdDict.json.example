@@ -3,6 +3,8 @@
 }
 /*
 {
+  type: 'object',
+  required: [],
   additionalProperties: { type: 'string', pattern: String.raw`\d{18}` }
 } 
 */
