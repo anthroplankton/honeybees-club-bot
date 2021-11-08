@@ -1,4 +1,5 @@
-import { SlashCommandBuilder } from '../common/interactive'
+import { MessageActionRow } from 'discord.js'
+import { SlashCommandBuilder, SelectMenuCover } from '../common/interactive'
 
 export const test = new SlashCommandBuilder()
     .setDescription('test')
@@ -34,9 +35,25 @@ export const test2 = new SlashCommandBuilder()
                     .setDescription('a')
                     .addBooleanOption(o => o.setName('c').setDescription('c'))
                     .setInteractor(async (interaction, options) => {
-                        await interaction.reply(
-                            '```json\n' + `${JSON.stringify(options)}` + '```'
-                        )
+                        const component =
+                            new testSelectMenu.Builder().setOptions({
+                                label: '1',
+                                value: '1',
+                            })
+                        component.setCustomId('124')
+                        await interaction.reply({
+                            content:
+                                '```json\n' +
+                                `${JSON.stringify(options)}` +
+                                '```',
+                            components: [
+                                new MessageActionRow().setComponents(component),
+                            ],
+                        })
                     })
             )
     )
+
+export const testSelectMenu = new SelectMenuCover(async interaction => {
+    await interaction.update({ components: [] })
+})

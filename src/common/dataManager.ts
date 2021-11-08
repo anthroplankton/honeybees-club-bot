@@ -3,6 +3,9 @@ import EventEmitter from 'events'
 import fs from 'fs/promises'
 import path from 'path'
 import Ajv, { JSONSchemaType, ValidateFunction } from 'ajv'
+import { black, bgGreen, bgBlue } from 'chalk'
+import { inspect } from 'util'
+import logger from '../common/log'
 
 let djsClient: Client
 const ajv = new Ajv()
@@ -102,8 +105,7 @@ export const dataEmitter: Pick<
 export async function load(client: Client) {
     djsClient = client
     await Promise.all(dataNames.map(loadAndWatch))
-    console.log('Loading completed: data')
-    console.log(data)
+    logger.event('Loading Completed', bgBlue('data'), data)
 }
 
 export async function loadJSON<K extends DataName>(dataName: K) {
@@ -116,7 +118,7 @@ export async function loadJSON<K extends DataName>(dataName: K) {
         ) as Required<typeof validates>[K]
     }
     if (!validate(json)) {
-        throw validate.errors
+        throw new Error(inspect(validate.errors))
     }
     data[dataName] = json as Data[K]
     dataEmitter.emit(dataName, json as Data[K])
@@ -145,7 +147,7 @@ async function watch(dataName: DataName) {
                 continue
             }
             await loadJSON(dataName)
-            console.log(`Reloaded JSON data: "${dataName}".`)
+            logger.info('Reloaded JSON data', bgGreen(black(dataName)))
         }
     } catch (err) {
         console.error(err)

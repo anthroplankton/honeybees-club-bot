@@ -1,6 +1,7 @@
 import type { Client, Snowflake } from 'discord.js'
 import type { MessageSelectOptionData } from '../common/interactive'
 import { MessageActionRow, InteractionCollector } from 'discord.js'
+import logger from '../common/log'
 import data, { dataEmitter } from '../common/dataManager'
 import { SlashCommandBuilder, SelectMenuCover } from '../common/interactive'
 
@@ -130,7 +131,7 @@ async function makeGuildIdRolesEntry(
 ): Promise<[guildId: string, roleOptions: RoleOption[]] | void> {
     const guildId = data.guildIdDict[guildName]
     if (guildId === undefined) {
-        console.warn(
+        logger.warn(
             `The guild "${guildName}" that on "cafeteriaRolesDict" does not exist on "guildIdDict".`
         )
         return
@@ -147,8 +148,8 @@ async function makeGuildIdRolesEntry(
     const indexMap = new Map<string, number>()
     for (const { role, emoji } of roleEmojiObjs) {
         if (indexMap.has(role)) {
-            console.warn(
-                `The role "${role}" of the guild "${guildName} repeats on "cafeteriaRolesDict".`
+            logger.warn(
+                `The role "${role}" of the guild "${guildName}" repeats on "cafeteriaRolesDict".`
             )
             continue
         }

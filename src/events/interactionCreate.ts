@@ -13,7 +13,8 @@ import type {
     SelectMenuCover,
 } from '../common/interactive'
 import { ApplicationCommandOptionType } from 'discord-api-types/v9'
-import path from 'path'
+import { bgBlue } from 'chalk'
+import logger, { LogPath, LogTree } from '../common/log'
 import { getInteractive } from '../common/commandManager'
 
 type CommandBuilder =
@@ -30,6 +31,17 @@ const commandBuilderMap: CommandBuilderMap = new Map()
 type SelectMenuCoverMap = Map<string, SelectMenuCover>
 const selectMenuCoverMap: SelectMenuCoverMap = new Map()
 
+const OptionTypeNameDict = {
+    [ApplicationCommandOptionType.String]: 'String',
+    [ApplicationCommandOptionType.Integer]: 'Integer',
+    [ApplicationCommandOptionType.Boolean]: 'Boolean',
+    [ApplicationCommandOptionType.User]: 'User',
+    [ApplicationCommandOptionType.Channel]: 'Channel',
+    [ApplicationCommandOptionType.Role]: 'Role',
+    [ApplicationCommandOptionType.Mentionable]: 'Mentionable',
+    [ApplicationCommandOptionType.Number]: 'Number',
+} as const
+
 export async function load(client: Client) {
     const { slashCommandBuilders, selectMenuCovers } = await getInteractive(
         client
@@ -37,12 +49,23 @@ export async function load(client: Client) {
     for (const builder of slashCommandBuilders) {
         setCommandBuilderMap(commandBuilderMap, builder)
     }
+    logger.event(
+        'Loading Completed',
+        bgBlue('Slash Comamnd'),
+        makeLogTree(commandBuilderMap)
+    )
     for (const cover of selectMenuCovers) {
         selectMenuCoverMap.set(cover.customId, cover)
     }
-    console.log('Loading completed: interaction')
-    console.log(commandBuilderMap)
-    console.log(selectMenuCoverMap)
+    logger.event(
+        'Loading Completed',
+        bgBlue('select menu'),
+        new LogTree().addChildren(
+            ...Array.from(selectMenuCoverMap.keys(), customId =>
+                new LogTree().setName(customId)
+            )
+        )
+    )
 }
 
 function isSubcommandGroup(
@@ -69,6 +92,32 @@ function setCommandBuilderMap(map: CommandBuilderMap, builder: CommandBuilder) {
     }
 }
 
+function makeLogTree(map: CommandBuilderMap) {
+    const logTree = new LogTree()
+    for (const [name, node] of map) {
+        if (node.children.size) {
+            logTree.addChildren(makeLogTree(node.children).setName(name))
+            continue
+        }
+        const child = new LogTree()
+            .setName(name)
+            .addChildren(
+                ...(node.builder.options as SlashCommandOption[]).map(
+                    ({ name, type, required }) =>
+                        new LogTree()
+                            .setName(name)
+                            .setValue(
+                                required
+                                    ? OptionTypeNameDict[type]
+                                    : `?${OptionTypeNameDict[type]}`
+                            )
+                )
+            )
+        logTree.addChildren(child)
+    }
+    return logTree
+}
+
 export async function listener(interaction: Interaction) {
     try {
         if (interaction.isCommand()) {
@@ -77,7 +126,7 @@ export async function listener(interaction: Interaction) {
             await selectMenuListener(interaction)
         }
     } catch (err) {
-        console.log(err)
+        logger.error(err)
         if (interaction.isCommand()) {
             const reply = {
                 content: 'There was an error while executing this command!',
@@ -108,25 +157,27 @@ async function commandListener(interaction: CommandInteraction) {
     const { commandName } = interaction
     const subcommandGroupName = interaction.options.getSubcommandGroup(false)
     const subcommandName = interaction.options.getSubcommand(false)
-    let [node, commandPath] = getCommandBuilderNode(
+    const commandPath = new LogPath()
+    let [node, commandPathTail] = getCommandBuilderNode(
         commandBuilderMap,
-        commandName
+        commandName,
+        commandPath
     )
     if (subcommandGroupName !== null) {
-        void ([node, commandPath] = getCommandBuilderNode(
+        void ([node, commandPathTail] = getCommandBuilderNode(
             node.children,
             subcommandGroupName,
-            commandPath
+            commandPathTail
         ))
     }
     if (subcommandName !== null) {
-        void ([node, commandPath] = getCommandBuilderNode(
+        void ([node] = getCommandBuilderNode(
             node.children,
             subcommandName,
-            commandPath
+            commandPathTail
         ))
     }
-    console.log(`Command interaction create: ${commandPath}`)
+    logger.event('Command Interaction Create', commandPath)
     const builder = node.builder as
         | SlashCommandBuilder
         | SlashCommandSubcommandBuilder
@@ -144,10 +195,10 @@ async function commandListener(interaction: CommandInteraction) {
 function getCommandBuilderNode(
     map: CommandBuilderMap,
     name: string,
-    commandPath = '/'
-): [node: CommandBuilderNode, commandPath: string] {
+    commandPath = new LogPath().setName('/')
+): [node: CommandBuilderNode, nextCommandPath: LogPath] {
+    commandPath = commandPath.setNext(new LogPath().setName(name))
     const node = map.get(name)
-    commandPath = path.join(commandPath, name)
     if (node === undefined) {
         throw new Error(`The command "${commandPath}" does not bind.`)
     }
@@ -160,29 +211,16 @@ function getInteractionOption(
     required: boolean,
     type: SlashCommandOption['type']
 ) {
-    switch (type) {
-        case ApplicationCommandOptionType.String:
-            return options.getString(name, required)
-        case ApplicationCommandOptionType.Integer:
-            return options.getInteger(name, required)
-        case ApplicationCommandOptionType.Boolean:
-            return options.getBoolean(name, required)
-        case ApplicationCommandOptionType.User:
-            return options.getUser(name, required)
-        case ApplicationCommandOptionType.Channel:
-            return options.getChannel(name, required)
-        case ApplicationCommandOptionType.Role:
-            return options.getRole(name, required)
-        case ApplicationCommandOptionType.Mentionable:
-            return options.getMentionable(name, required)
-        case ApplicationCommandOptionType.Number:
-            return options.getNumber(name, required)
-    }
+    const getMethodName = `get${OptionTypeNameDict[type]}` as const
+    return options[getMethodName](name, required)
 }
 
 async function selectMenuListener(interaction: SelectMenuInteraction) {
     const { customId } = interaction
-    console.log(`Select menu interaction create: ${customId}`)
+    logger.event(
+        'Select Menu Interaction Create',
+        new LogPath().setName(customId)
+    )
     const cover = selectMenuCoverMap.get(customId)
     if (cover === undefined) {
         throw new Error(`The select menu "${customId}" does not bind.`)

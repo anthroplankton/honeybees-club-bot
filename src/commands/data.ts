@@ -5,6 +5,9 @@ import type {
 import type { DataName } from '../common/dataManager'
 import { MessageActionRow, InteractionCollector } from 'discord.js'
 import { inlineCode, blockQuote } from '@discordjs/builders'
+import { black, bgGreen } from 'chalk'
+import logger from '../common/log'
+
 import { dataNames, loadJSON } from '../common/dataManager'
 import {
     SlashCommandBuilder,
@@ -77,7 +80,7 @@ async function reloadSelectedData(
                 )
                 return
             }
-            console.log(`Reloaded JSON data: "${dataName}".`)
+            logger.info('Reloaded JSON data', bgGreen(black(dataName)))
             await interaction.followUp(
                 `Successfully reloaded ${inlineCode(dataName)}.`
             )
