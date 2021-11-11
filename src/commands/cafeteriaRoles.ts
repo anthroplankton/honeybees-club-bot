@@ -1,6 +1,6 @@
 import type { Client, Snowflake } from 'discord.js'
 import type { MessageSelectOptionData } from '../common/interactive'
-import { MessageActionRow, InteractionCollector } from 'discord.js'
+import { MessageActionRow, InteractionCollector, Permissions } from 'discord.js'
 import logger from '../common/log'
 import data, { dataEmitter } from '../common/dataManager'
 import { SlashCommandBuilder, SelectMenuCover } from '../common/interactive'
@@ -93,6 +93,26 @@ export async function load(client: Client | Client<false>) {
     dataEmitter.on('cafeteriaRolesDict', makeGuildIdSelectMenuMap)
 }
 
+const permissionBlacklist =
+    Permissions.FLAGS.CREATE_INSTANT_INVITE |
+    Permissions.FLAGS.KICK_MEMBERS |
+    Permissions.FLAGS.BAN_MEMBERS |
+    Permissions.FLAGS.ADMINISTRATOR |
+    Permissions.FLAGS.MANAGE_CHANNELS |
+    Permissions.FLAGS.MANAGE_GUILD |
+    Permissions.FLAGS.VIEW_AUDIT_LOG |
+    Permissions.FLAGS.PRIORITY_SPEAKER |
+    Permissions.FLAGS.MANAGE_MESSAGES |
+    Permissions.FLAGS.MENTION_EVERYONE |
+    Permissions.FLAGS.VIEW_GUILD_INSIGHTS |
+    Permissions.FLAGS.MUTE_MEMBERS |
+    Permissions.FLAGS.DEAFEN_MEMBERS |
+    Permissions.FLAGS.MOVE_MEMBERS |
+    Permissions.FLAGS.MANAGE_ROLES |
+    Permissions.FLAGS.MANAGE_WEBHOOKS |
+    Permissions.FLAGS.MANAGE_EMOJIS_AND_STICKERS |
+    Permissions.FLAGS.MANAGE_THREADS
+
 async function makeGuildIdSelectMenuMap(
     client: Client,
     cafeteriaRolesDict: CafeteriaRolesDict
@@ -162,9 +182,16 @@ async function makeGuildIdRolesEntry(
     }
     for (const role of roleCollection.values()) {
         const i = indexMap.get(role.name)
-        if (i !== undefined) {
-            roles[i].value = role.id
+        if (i === undefined) {
+            continue
         }
+        if (role.permissions.any(permissionBlacklist)) {
+            logger.warn(
+                `The role "${role.name}" of the guild "${guildName}" has any permissions not allowed on "cafeteriaRolesDict".`
+            )
+            continue
+        }
+        roles[i].value = role.id
     }
     return [guildId, roles]
 }
