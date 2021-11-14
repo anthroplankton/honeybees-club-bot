@@ -1,19 +1,41 @@
+import type { RESTGetAPIGuildRolesResult } from 'discord-api-types/v9'
+import { Routes } from 'discord-api-types/v9'
+import { REST } from '@discordjs/rest'
+import { inspect } from 'util'
+import { supportsColor } from 'chalk'
+import PrettyError from 'pretty-error'
 import prompts from 'prompts'
 import { loadJSON } from '../src/common/dataManager'
 import { getCommandNames, refresh } from '../src/common/commandManager'
+import {
+    makeSpecifiedGuildCommandPermissionsMap,
+    toAPIApplicationCommandPermissionsMap,
+} from '../src/data-schemas/commandPermissionsDict'
+
+if (process.env.TOKEN === undefined) {
+    throw new Error('There is no token in environment.')
+}
+const token = process.env.TOKEN
+
+inspect.defaultOptions.depth = 4
+inspect.defaultOptions.colors = Boolean(supportsColor)
+PrettyError.start()
 
 void (async () => {
     const guildIdDict = await loadJSON('guildIdDict')
     const commandNames = await getCommandNames()
-    const { guildId, pickedCommandNames } = await prompts([
+    const {
+        guild: [guildKey, guildId],
+        pickedCommandNames,
+    } = await prompts([
         {
             type: 'select',
-            name: 'guildId',
+            name: 'guild',
             message: 'Select a guild.',
             initial: 0,
             choices: Object.entries(guildIdDict).map(([key, id]) => ({
                 title: key,
-                value: id,
+                value: [key, id],
             })),
         },
         {
@@ -26,5 +48,21 @@ void (async () => {
             })),
         },
     ])
-    await refresh(guildId, pickedCommandNames)
+    await refresh(
+        guildId,
+        pickedCommandNames,
+        (async () => {
+            const commandPermissionsMap =
+                makeSpecifiedGuildCommandPermissionsMap(
+                    guildKey,
+                    await loadJSON('commandPermissionsDict')
+                )
+            const rest = new REST({ version: '9' }).setToken(token)
+            const roles = await rest.get(Routes.guildRoles(guildId))
+            return toAPIApplicationCommandPermissionsMap(
+                roles as RESTGetAPIGuildRolesResult,
+                commandPermissionsMap
+            )
+        })()
+    )
 })()

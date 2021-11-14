@@ -2,11 +2,15 @@ import type { Client, Snowflake } from 'discord.js'
 import type { MessageSelectOptionData } from '../common/interactive'
 import { MessageActionRow, InteractionCollector, Permissions } from 'discord.js'
 import logger from '../common/log'
+import { makeNameObjectMap } from '../common/util'
 import data, { dataEmitter } from '../common/dataManager'
 import { SlashCommandBuilder, SelectMenuCover } from '../common/interactive'
+import { CommandPermissionsKey } from '../data-schemas/commandPermissionsDict'
 
 export const role = new SlashCommandBuilder()
     .setDescription('handle role')
+    .setDefaultPermission(false)
+    .setPermissionsKeys(CommandPermissionsKey.NORMAL)
     .addSubcommand(subcommand =>
         subcommand
             .setName('set')
@@ -120,7 +124,7 @@ async function makeGuildIdSelectMenuMap(
     const guildIdRolesEntries = (
         await Promise.all(
             Object.entries(cafeteriaRolesDict).map(entry =>
-                makeGuildIdRolesEntry(client, entry)
+                makeGuildIdRoleOptionsEntry(client, entry)
             )
         )
     ).filter((entry): entry is [string, RoleOption[]] => {
@@ -145,53 +149,57 @@ async function makeGuildIdSelectMenuMap(
     }
 }
 
-async function makeGuildIdRolesEntry(
+async function makeGuildIdRoleOptionsEntry(
     client: Client,
-    [guildName, roleEmojiObjs]: [string, CafeteriaRolesDict[string]]
+    [guildKey, roleEmojiObjs]: [string, CafeteriaRolesDict[string]]
 ): Promise<[guildId: string, roleOptions: RoleOption[]] | void> {
-    const guildId = data.guildIdDict[guildName]
+    const guildId = data.guildIdDict[guildKey]
     if (guildId === undefined) {
         logger.warn(
-            `The guild "${guildName}" that on "cafeteriaRolesDict" does not exist on "guildIdDict".`
+            `The guild "${guildKey}" that on "cafeteriaRolesDict" does not exist on "guildIdDict".`
         )
         return
     }
     if (roleEmojiObjs === undefined || !roleEmojiObjs.length) {
         return
     }
-    const guild = await client.guilds.fetch({ guild: guildId, force: true })
+    const guild = await client.guilds.fetch(guildId)
     const [roleCollection, emojiCollection] = await Promise.all([
         guild.roles.fetch(),
-        guild.emojis.fetch(),
+        // patch new GuildEmojiManager into the guild
+        // https://github.com/discordjs/discord.js/blob/13.3.1/src/structures/Guild.js#L428
+        guild.fetch().then(guild => guild.emojis.fetch()),
     ])
-    const roles: RoleOption[] = []
-    const indexMap = new Map<string, number>()
-    for (const { role, emoji } of roleEmojiObjs) {
-        if (indexMap.has(role)) {
+    const roleMap = makeNameObjectMap(...roleCollection.values())
+    const emojiMap = makeNameObjectMap(...emojiCollection.values())
+
+    const roleOptionSet = new Set<string>()
+    const roleOptions: RoleOption[] = []
+    for (const { role: roleName, emoji: emojiName } of roleEmojiObjs) {
+        if (roleOptionSet.has(roleName)) {
             logger.warn(
-                `The role "${role}" of the guild "${guildName}" repeats on "cafeteriaRolesDict".`
+                `The role "${roleName}" of the guild "${guildKey}" repeats on "cafeteriaRolesDict".`
             )
             continue
         }
-        roles.push({
-            label: role,
-            value: '',
-            emoji: emojiCollection.findKey(({ name }) => name == emoji),
-        })
-        indexMap.set(role, indexMap.size)
-    }
-    for (const role of roleCollection.values()) {
-        const i = indexMap.get(role.name)
-        if (i === undefined) {
+        const role = roleMap.get(roleName)
+        if (role === undefined) {
+            logger.warn(
+                `No such role "${roleName}" of the guild "${guildKey}".`
+            )
             continue
         }
         if (role.permissions.any(permissionBlacklist)) {
             logger.warn(
-                `The role "${role.name}" of the guild "${guildName}" has any permissions not allowed on "cafeteriaRolesDict".`
+                `The role "${role.name}" of the guild "${guildKey}" has any permissions not allowed on "cafeteriaRolesDict".`
             )
             continue
         }
-        roles[i].value = role.id
+        roleOptions.push({
+            label: roleName,
+            value: role.id,
+            emoji: emojiName ? emojiMap.get(emojiName) : undefined,
+        })
     }
-    return [guildId, roles]
+    return [guildId, roleOptions]
 }

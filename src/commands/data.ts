@@ -7,13 +7,13 @@ import { MessageActionRow, InteractionCollector } from 'discord.js'
 import { inlineCode, blockQuote } from '@discordjs/builders'
 import { black, bgGreen } from 'chalk'
 import logger from '../common/log'
-
 import { dataNames, loadJSON } from '../common/dataManager'
 import {
     SlashCommandBuilder,
     SlashCommandSubcommandBuilder,
     SelectMenuCover,
 } from '../common/interactive'
+import { CommandPermissionsKey } from '../data-schemas/commandPermissionsDict'
 
 const all = new SlashCommandSubcommandBuilder()
     .setName('all')
@@ -57,6 +57,8 @@ const selected = new SlashCommandSubcommandBuilder()
 
 export const data = new SlashCommandBuilder()
     .setDescription('handle data')
+    .setDefaultPermission(false)
+    .setPermissionsKeys(CommandPermissionsKey.DEV)
     .addSubcommandGroup(subcommandGroup =>
         subcommandGroup
             .setName('reload')
@@ -74,7 +76,7 @@ async function reloadSelectedData(
             try {
                 await loadJSON(dataName)
             } catch (err) {
-                console.error(err)
+                logger.error(err)
                 await interaction.followUp(
                     `Failed to reload ${inlineCode(dataName)}`
                 )

@@ -13,7 +13,7 @@ import type {
     SelectMenuCover,
 } from '../common/interactive'
 import { ApplicationCommandOptionType } from 'discord-api-types/v9'
-import { bgBlue } from 'chalk'
+import { bgBlue, bgGray } from 'chalk'
 import logger, { LogPath, LogTree } from '../common/log'
 import { getInteractive } from '../common/commandManager'
 
@@ -95,27 +95,33 @@ function setCommandBuilderMap(map: CommandBuilderMap, builder: CommandBuilder) {
 function makeLogTree(map: CommandBuilderMap) {
     const logTree = new LogTree()
     for (const [name, node] of map) {
-        if (node.children.size) {
-            logTree.addChildren(makeLogTree(node.children).setName(name))
-            continue
+        const child = node.children.size
+            ? makeLogTree(node.children)
+            : makeOptionLogTree(node.builder.options as SlashCommandOption[])
+
+        if (
+            'permissionsKeys' in node.builder &&
+            node.builder.permissionsKeys.length
+        ) {
+            child.setValue(bgGray('@' + node.builder.permissionsKeys.join('|')))
         }
-        const child = new LogTree()
-            .setName(name)
-            .addChildren(
-                ...(node.builder.options as SlashCommandOption[]).map(
-                    ({ name, type, required }) =>
-                        new LogTree()
-                            .setName(name)
-                            .setValue(
-                                required
-                                    ? OptionTypeNameDict[type]
-                                    : `?${OptionTypeNameDict[type]}`
-                            )
-                )
-            )
-        logTree.addChildren(child)
+        logTree.addChildren(child.setName(name))
     }
     return logTree
+}
+
+function makeOptionLogTree(options: SlashCommandOption[]) {
+    return new LogTree().addChildren(
+        ...options.map(({ name, type, required }) =>
+            new LogTree()
+                .setName(name)
+                .setValue(
+                    required
+                        ? OptionTypeNameDict[type]
+                        : `?${OptionTypeNameDict[type]}`
+                )
+        )
+    )
 }
 
 export async function listener(interaction: Interaction) {

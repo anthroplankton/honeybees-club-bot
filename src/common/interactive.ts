@@ -34,6 +34,11 @@ export class SlashCommandBuilder extends SlashCommandBuilderStrictFunctionTypes 
         Reflect.set(this, 'interactor', interactor)
         return this
     }
+    public readonly permissionsKeys: string[] = []
+    public setPermissionsKeys(...Keys: string[]) {
+        this.permissionsKeys.splice(0, this.permissionsKeys.length, ...Keys)
+        return this
+    }
     public override addSubcommand(
         input:
             | SlashCommandSubcommandBuilder
