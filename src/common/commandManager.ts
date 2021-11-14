@@ -1,10 +1,16 @@
+import type { Client, Snowflake } from 'discord.js'
+import type {
+    APIApplicationCommandPermission,
+    RESTPutAPIApplicationCommandsResult,
+    RESTPutAPIGuildApplicationCommandsPermissionsJSONBody,
+} from 'discord-api-types/v9'
 import { Routes } from 'discord-api-types/v9'
 import { SlashCommandBuilder as DjsSlashCommandBuilder } from '@discordjs/builders'
 import { REST } from '@discordjs/rest'
 import fs from 'fs/promises'
 import path from 'path'
+import logger from './log'
 import { SlashCommandBuilder, SelectMenuCover } from '../common/interactive'
-import { Client } from 'discord.js'
 
 if (process.env.CLIENTID === undefined) {
     throw new Error('There is no client id in environment.')
@@ -14,6 +20,9 @@ if (process.env.TOKEN === undefined) {
 }
 const clientId = process.env.CLIENTID
 const token = process.env.TOKEN
+
+type CommandName = string
+type CommandPermissionsKey = string
 
 export async function getCommandNames() {
     const files = await fs.readdir(path.resolve(__dirname, '../commands'))
@@ -26,8 +35,8 @@ export async function getCommandNames() {
 }
 
 export async function getCommandModules(
-    commandNames?: string[],
-    client?: Client
+    client?: Client,
+    commandNames?: CommandName[]
 ) {
     commandNames = commandNames || (await getCommandNames())
     const commandModules = await Promise.all(
@@ -47,8 +56,8 @@ export async function getCommandModules(
     return commandModules
 }
 
-export async function getCommands(commandNames?: string[]) {
-    const commandModules = await getCommandModules(commandNames)
+export async function getCommands(commandNames?: CommandName[]) {
+    const commandModules = await getCommandModules(undefined, commandNames)
     return commandModules
         .map(Object.entries)
         .flat()
@@ -59,8 +68,11 @@ export async function getCommands(commandNames?: string[]) {
         .map(([name, command]) => command.setName(command.name || name))
 }
 
-export async function getInteractive(client?: Client, commandNames?: string[]) {
-    const commandModules = await getCommandModules(commandNames, client)
+export async function getInteractive(
+    client?: Client,
+    commandNames?: CommandName[]
+) {
+    const commandModules = await getCommandModules(client, commandNames)
     const slashCommandBuilders: SlashCommandBuilder[] = []
     const selectMenuCovers: SelectMenuCover[] = []
     for (const [key, obj] of commandModules.map(Object.entries).flat()) {
@@ -73,25 +85,97 @@ export async function getInteractive(client?: Client, commandNames?: string[]) {
     return { slashCommandBuilders, selectMenuCovers }
 }
 
-export async function refresh(guildId: string, CommandNames: string[]) {
-    const commandJSONs = (await getCommands(CommandNames)).map(command =>
-        command.toJSON()
-    )
+export async function refresh(
+    guildId: Snowflake,
+    commandNames: CommandName[],
+    mapPromise: Promise<
+        Map<CommandPermissionsKey, APIApplicationCommandPermission[]>
+    >
+) {
+    try {
+        const [[commands, apiCommands], map] = await Promise.all([
+            putCommands(guildId, commandNames),
+            mapPromise,
+        ])
+
+        const commandNamePermissionsMap = new Map<
+            CommandName,
+            APIApplicationCommandPermission[]
+        >()
+        for (const command of commands) {
+            if (!(command instanceof SlashCommandBuilder)) {
+                continue
+            }
+            const permissions = command.permissionsKeys.map(key => {
+                const permissions = map.get(key)
+                if (permissions === undefined) {
+                    throw new Error(
+                        `The permissions of the key "${key}" was not be found`
+                    )
+                }
+                return permissions
+            })
+            commandNamePermissionsMap.set(command.name, permissions.flat())
+        }
+
+        await putPermissions(guildId, apiCommands, commandNamePermissionsMap)
+    } catch (err) {
+        logger.error(err)
+    }
+}
+
+async function putCommands(
+    guildId: Snowflake,
+    commandNames: string[]
+): Promise<[DjsSlashCommandBuilder[], RESTPutAPIApplicationCommandsResult]> {
+    const commands = await getCommands(commandNames)
+    const commandJSONs = commands.map(command => command.toJSON())
 
     const rest = new REST({ version: '9' }).setToken(token)
-    try {
-        console.log('Started refreshing application (/) commands.')
 
-        const response = await rest.put(
-            Routes.applicationGuildCommands(clientId, guildId),
-            {
-                body: commandJSONs,
-            }
-        )
+    logger.info('Started refreshing application (/) commands.')
 
-        console.log(response)
-        console.log('Successfully reloaded application (/) commands.')
-    } catch (err) {
-        console.error(err)
+    const response = await rest.put(
+        Routes.applicationGuildCommands(clientId, guildId),
+        {
+            body: commandJSONs,
+        }
+    )
+
+    logger.debug(response)
+    logger.info('Successfully refreshed application (/) commands.')
+
+    return [commands, response as RESTPutAPIApplicationCommandsResult]
+}
+
+async function putPermissions(
+    guildId: Snowflake,
+    commands: RESTPutAPIApplicationCommandsResult,
+    map: Map<CommandName, APIApplicationCommandPermission[]>
+) {
+    const body: RESTPutAPIGuildApplicationCommandsPermissionsJSONBody = []
+    for (const command of commands) {
+        const permissions = map.get(command.name)
+        if (permissions === undefined) {
+            continue
+        }
+        body.push({
+            id: command.id,
+            permissions,
+        })
     }
+
+    const rest = new REST({ version: '9' }).setToken(token)
+
+    logger.info('Started edit application (/) commands permissions.')
+
+    const response = await rest.put(
+        Routes.guildApplicationCommandsPermissions(clientId, guildId),
+        {
+            body,
+        }
+    )
+
+    logger.debug(response)
+    logger.info('Successfully edited application (/) commands permissions.')
 }

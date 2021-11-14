@@ -1,6 +1,7 @@
 import type { Client } from 'discord.js'
-import type guildIdDict from '../dataSchemas/guildIdDict'
-import type cafeteriaRolesDict from '../dataSchemas/cafeteriaRolesDict'
+import type guildIdDict from '../data-schemas/guildIdDict'
+import type cafeteriaRolesDict from '../data-schemas/cafeteriaRolesDict'
+import type commandPermissionsDict from '../data-schemas/commandPermissionsDict'
 import EventEmitter from 'events'
 import fs from 'fs/promises'
 import path from 'path'
@@ -27,11 +28,21 @@ const ajv = new Ajv()
 export interface Data {
     guildIdDict: guildIdDict
     cafeteriaRolesDict: cafeteriaRolesDict
+    commandPermissionsDict: commandPermissionsDict
 }
-const data = {} as Data
+export const data = {} as Data
+export type DataName = typeof dataNames[number]
+export const dataNames = [
+    'cafeteriaRolesDict' as const,
+    'commandPermissionsDict' as const,
+    'guildIdDict' as const,
+]
 export default data
-export type DataName = keyof Data
-export const dataNames: DataName[] = ['guildIdDict', 'cafeteriaRolesDict']
+
+type DataKeyContainsDataName = DataName extends keyof Data ? true : false
+type DataNameContainsDataKey = keyof Data extends DataName ? true : false
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const checking: DataNameContainsDataKey & DataKeyContainsDataName = true
 
 const validates: { [K in DataName]?: ValidateFunction<Data[K]> } = {}
 
@@ -92,8 +103,8 @@ export async function loadJSON<K extends DataName>(
     const json = JSON.parse(file)
     let validate = validates[dataName]
     if (validate === undefined) {
-        const [aData, schema] = await import(
-            path.join('../dataSchemas', dataName)
+        const { data: aData, schema } = await import(
+            path.join('../data-schemas', dataName)
         )
         data[dataName] = aData
         validate = validates[dataName] = ajv.compile(schema) as Required<
@@ -101,7 +112,11 @@ export async function loadJSON<K extends DataName>(
         >[K]
     }
     if (!validate(json)) {
-        throw new Error(inspect(validate.errors))
+        throw new Error(
+            `Failed to validate JSON data "${dataName}" ${inspect(
+                validate.errors
+            )}`
+        )
     }
     data[dataName] = json as Data[K]
     dataEmitter.emit(dataName, json as Data[K])

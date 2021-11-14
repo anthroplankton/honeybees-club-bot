@@ -1,8 +1,11 @@
 import { MessageActionRow } from 'discord.js'
 import { SlashCommandBuilder, SelectMenuCover } from '../common/interactive'
+import { CommandPermissionsKey } from '../data-schemas/commandPermissionsDict'
 
 export const test = new SlashCommandBuilder()
     .setDescription('test')
+    .setDefaultPermission(false)
+    .setPermissionsKeys(CommandPermissionsKey.DEV)
     .addStringOption(o => o.setName('a').setRequired(true).setDescription('a'))
     .addIntegerOption(o => o.setName('b').setDescription('b'))
     .addIntegerOption(o => o.setName('c').setDescription('c'))
@@ -15,6 +18,8 @@ export const test = new SlashCommandBuilder()
 
 export const test2 = new SlashCommandBuilder()
     .setDescription('test2')
+    .setDefaultPermission(false)
+    .setPermissionsKeys(CommandPermissionsKey.DEV)
     .addSubcommand(subcommand =>
         subcommand
             .setName('a')
