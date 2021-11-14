@@ -1,5 +1,5 @@
 {
-  "guild key": [...{ "role": "role name",  "emoji": "emoji name" | undefined }]
+  "guild key": [{ "role": "role name",  "emoji": "emoji name" | null }, ...]
 }
 /*
 {
