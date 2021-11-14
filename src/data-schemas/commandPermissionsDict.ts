@@ -30,29 +30,55 @@ export const data: {
 const guildCommandPermissionsSchema: JSONSchemaType<
     typeof data[CommandPermissionsKey]
 > = {
+    description: 'Map guild keys to an array of command permission objects.',
     type: 'object',
     required: [],
     additionalProperties: {
+        description: 'Command permission objects.',
         type: 'array',
         items: {
             anyOf: [
                 {
+                    description: 'A Command permission object for a user.',
                     type: 'object',
                     required: ['id', 'type', 'permission'],
                     properties: {
-                        id: { type: 'string', pattern: String.raw`\d{18}` },
-                        type: { type: 'string', const: 'user' },
-                        permission: { type: 'boolean' },
+                        id: {
+                            description: 'The user ID.',
+                            type: 'string',
+                            pattern: String.raw`^\d{18}$`,
+                        },
+                        type: {
+                            description: 'Specify the command permission type.',
+                            type: 'string',
+                            const: 'user',
+                        },
+                        permission: {
+                            description: 'True to allow, false, to disallow.',
+                            type: 'boolean',
+                        },
                     },
                     additionalProperties: false,
                 },
                 {
+                    description: 'A Command permission object for a role',
                     type: 'object',
                     required: ['name', 'type', 'permission'],
                     properties: {
-                        name: { type: 'string' },
-                        type: { type: 'string', const: 'role' },
-                        permission: { type: 'boolean' },
+                        name: {
+                            description:
+                                'A Command permission object for a user.',
+                            type: 'string',
+                        },
+                        type: {
+                            description: 'Specify the command permission type.',
+                            type: 'string',
+                            const: 'role',
+                        },
+                        permission: {
+                            description: 'True to allow, false, to disallow.',
+                            type: 'boolean',
+                        },
                     },
                     additionalProperties: false,
                 },
@@ -62,6 +88,7 @@ const guildCommandPermissionsSchema: JSONSchemaType<
 }
 
 export const schema: JSONSchemaType<typeof data> = {
+    description: 'Map guild keys to an array of command permission objects.',
     type: 'object',
     required: ['dev', 'normal'] as CommandPermissionsKey[],
     properties: {
@@ -88,8 +115,8 @@ export function makeSpecifiedGuildCommandPermissionsMap(
 }
 
 export function toAPIApplicationCommandPermissionsMap(
-    roles: { name: string; id: string }[],
-    map: Map<string, CommandPermission[]>
+    map: Map<string, CommandPermission[]>,
+    roles: { name: string; id: string }[]
 ) {
     const roleMap = makeNameObjMap(...roles)
     const apiMap = new Map<string, APIApplicationCommandPermission[]>()

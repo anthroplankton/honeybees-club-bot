@@ -3,7 +3,7 @@ import type cafeteriaRolesDict from '../data-schemas/cafeteriaRolesDict'
 import type commandPermissionsDict from '../data-schemas/commandPermissionsDict'
 import EventEmitter from 'events'
 import fs from 'fs/promises'
-import path from 'path'
+import path from 'path/posix'
 import { inspect } from 'util'
 import Ajv, { ValidateFunction } from 'ajv'
 import { black, bgGreen, bgBlue } from 'chalk'
@@ -85,18 +85,22 @@ export async function load() {
 export async function loadJSON<K extends DataName>(
     dataName: K
 ): Promise<Data[K]> {
-    const file = await fs.readFile(getFilename(dataName), 'utf8')
-    const json = JSON.parse(file)
-    let validate = validates[dataName]
-    if (validate === undefined) {
-        const { data: aData, schema } = await import(
-            path.join('../data-schemas', dataName)
-        )
-        data[dataName] = aData
-        validate = validates[dataName] = ajv.compile(schema) as Required<
-            typeof validates
-        >[K]
-    }
+    const [json, validate] = await Promise.all([
+        (async () => {
+            const file = await fs.readFile(getFilename(dataName), 'utf8')
+            return JSON.parse(file)
+        })(),
+        (async () => {
+            if (validates[dataName] === undefined) {
+                const { data: aData, schema } = await importDataSchema(dataName)
+                data[dataName] = aData
+                validates[dataName] = ajv.compile(schema) as Required<
+                    typeof validates
+                >[K]
+            }
+            return validates[dataName] as Required<typeof validates>[K]
+        })(),
+    ])
     if (!validate(json)) {
         throw new Error(
             `Failed to validate JSON data "${dataName}" ${inspect(
@@ -109,8 +113,12 @@ export async function loadJSON<K extends DataName>(
     return json as Data[K]
 }
 
-function getFilename(dataName: DataName) {
+export function getFilename(dataName: DataName) {
     return path.format({ dir: './data', name: dataName, ext: '.json' })
+}
+
+export async function importDataSchema(dataName: DataName) {
+    return await import(path.join('../data-schemas', dataName))
 }
 
 async function loadAndWatch(dataName: DataName) {

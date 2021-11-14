@@ -1,0 +1,23 @@
+{
+  "files.associations": { "*.json.example": "jsonc", "*.json.schema": "json" },
+  "json.schemas": [
+    {
+      "fileMatch": [
+        "data/cafeteriaRolesDict.json",
+        "data/cafeteriaRolesDict.json.example"
+      ],
+      "url": "./data/cafeteriaRolesDict.json.schema"
+    },
+    {
+      "fileMatch": [
+        "data/commandPermissionsDict.json",
+        "data/commandPermissionsDict.json.example"
+      ],
+      "url": "./data/commandPermissionsDict.json.schema"
+    },
+    {
+      "fileMatch": ["data/guildIdDict.json", "data/guildIdDict.json.example"],
+      "url": "./data/guildIdDict.json.schema"
+    }
+  ]
+}

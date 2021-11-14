@@ -1,61 +1,9 @@
 {
   "dev": {
     "guild key": [
-      | {
-        "id": "000000000000000000",
-        "type": "user",
-        "permission": boolean
-      }
-      | {
-        "name": "role name",
-        "type": "role",
-        "permission": boolean
-      }, ...
+      { "id": "000000000000000000", "type": "user", "permission": true },
+      { "name": "role name", "type": "role", "permission": true }
     ]
   },
-  "normal": { ... }
+  "normal": {}
 }
-/*
-{
-    type: 'object',
-    required: ['dev', 'normal'] as CommandPermissionsKey[],
-    properties: {
-        dev: guildCommandPermissionsSchema,
-        normal: guildCommandPermissionsSchema,
-    },
-    additionalProperties: false,
-}
-*/
-/*
-guildCommandPermissionsSchema = {
-    type: 'object',
-    required: [],
-    additionalProperties: {
-        type: 'array',
-        items: {
-            anyOf: [
-                {
-                    type: 'object',
-                    required: ['id', 'type', 'permission'],
-                    properties: {
-                        id: { type: 'string', pattern: String.raw`\d{18}` },
-                        type: { type: 'string', const: 'user' },
-                        permission: { type: 'boolean' },
-                    },
-                    additionalProperties: false,
-                },
-                {
-                    type: 'object',
-                    required: ['name', 'type', 'permission'],
-                    properties: {
-                        name: { type: 'string' },
-                        type: { type: 'string', const: 'role' },
-                        permission: { type: 'boolean' },
-                    },
-                    additionalProperties: false,
-                },
-            ],
-        },
-    },
-}
-*/

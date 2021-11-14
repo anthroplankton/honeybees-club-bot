@@ -18,7 +18,7 @@
   "vueIndentScriptAndStyle": false,
   "overrides": [
     {
-      "files": "*.json",
+      "files": ["*.json.", "*.json.example", "*.json.schema"],
       "options": {
         "tabWidth": 2
       }

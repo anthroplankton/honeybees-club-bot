@@ -1,26 +1,5 @@
 {
-  "guild key": [...{ "role": "role name",  "emoji": "emoji name" | undefined }]
+  "guild key": [
+    { "role": "role name", "description": "description", "emoji": "emoji_name" }
+  ]
 }
-/*
-{
-  type: 'object',
-  required: [],
-  additionalProperties: {
-      type: 'array',
-      uniqueItem: true,
-      items: {
-          type: 'object',
-          required: ['role'],
-          properties: {
-              role: { type: 'string' },
-              emoji: {
-                  type: 'string',
-                  nullable: true,
-                  pattern: String.raw`[_0-9A-Za-z]`,
-              },
-          },
-          additionalProperties: false,
-      },
-  },
-}
-*/

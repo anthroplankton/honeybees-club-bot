@@ -12,20 +12,21 @@
     "build": "rimraf ./dist && tsc --build",
     "start": "node ./dist/bot.js",
     "bs": "npm run build && npm start",
-    "deploy": "ts-node ./scripts/deploy-commands.ts"
+    "deploy": "ts-node ./scripts/deploy-commands.ts",
+    "export": "ts-node ./scripts/export-json-schemas.ts"
   },
   "lint-staged": {
-    "./src/**/*.ts": [
+    "./(scripts|src)/**/*.ts": [
       "eslint",
       "prettier --write"
     ],
-    "./scripts/**/*.ts": [
-      "eslint",
-      "prettier --write"
+    "./data/**/*.json?(.example|.schema)": [
+      "prettier --write --parser json"
     ]
   },
   "devDependencies": {
     "@types/node": "^16.11.2",
+    "@types/prettier": "^2.4.2",
     "@types/prompts": "^2.0.14",
     "@typescript-eslint/eslint-plugin": "^5.1.0",
     "@typescript-eslint/parser": "^5.1.0",
