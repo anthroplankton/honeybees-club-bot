@@ -20,7 +20,13 @@ const client = new Client({ intents: new Intents() })
 
 process.on('SIGINT', () => {
     client.destroy()
-    logger.info('Interrupt! Client is Destroyed!')
+    logger.info('Interruption! Client is Destroyed!')
+    process.exit()
+})
+
+process.on('SIGTERM', () => {
+    client.destroy()
+    logger.info('Termination! Client is Destroyed!')
     process.exit()
 })
 
@@ -40,7 +46,7 @@ client.once('ready', client => {
 void (async () => {
     await Promise.all([createConnection('default'), createConnection('survey')])
     await Promise.all([
-        dataManager.load(client),
+        dataManager.load(),
         interactionCreate.load(client),
         client.login(token),
     ])

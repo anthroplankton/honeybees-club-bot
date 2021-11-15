@@ -1,4 +1,3 @@
-import type { Client } from 'discord.js'
 import type guildIdDict from '../data-schemas/guildIdDict'
 import type cafeteriaRolesDict from '../data-schemas/cafeteriaRolesDict'
 import type commandPermissionsDict from '../data-schemas/commandPermissionsDict'
@@ -10,7 +9,6 @@ import Ajv, { ValidateFunction } from 'ajv'
 import { black, bgGreen, bgBlue } from 'chalk'
 import logger from './log'
 
-let djsClient: Client
 /* Ajv 8.6.0 makes VSCode IntelliSense extremely slow
  * https://github.com/ajv-validator/ajv/issues/1667
  */
@@ -55,34 +53,23 @@ class DataEmitter extends EventEmitter {
             super.once(dataName, () => isReadySet.add(dataName))
         }
     }
-    private static wrap<K extends DataName>(
-        listener: (client: Client, data: Data[K]) => void
-    ) {
-        return async (client: Client, data: Data[K]) => {
-            try {
-                await listener(client, data)
-            } catch (err) {
-                client.emit('error', err as Error)
-            }
-        }
-    }
     public isReady(dataName: DataName) {
         return isReadySet.has(dataName)
     }
     public emit<K extends DataName>(eventName: K, data: Data[K]) {
-        return super.emit(eventName, djsClient, data)
+        return super.emit(eventName, data)
     }
     public on<K extends DataName>(
         eventName: K,
-        listener: (client: Client, data: Data[K]) => void
+        listener: (data: Data[K]) => void
     ) {
-        return super.on(eventName, DataEmitter.wrap(listener))
+        return super.on(eventName, listener)
     }
     public once<K extends DataName>(
         eventName: K,
-        listener: (client: Client, data: Data[K]) => void
+        listener: (data: Data[K]) => void
     ) {
-        return super.once(eventName, DataEmitter.wrap(listener))
+        return super.once(eventName, listener)
     }
 }
 export const dataEmitter: Pick<
@@ -90,8 +77,7 @@ export const dataEmitter: Pick<
     'isReady' | 'emit' | 'on' | 'once'
 > = new DataEmitter()
 
-export async function load(client: Client) {
-    djsClient = client
+export async function load() {
     await Promise.all(dataNames.map(loadAndWatch))
     logger.event('Loading Completed', bgBlue('data'), data)
 }
