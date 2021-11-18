@@ -8,7 +8,7 @@ import { Routes } from 'discord-api-types/v9'
 import { SlashCommandBuilder as DjsSlashCommandBuilder } from '@discordjs/builders'
 import { REST } from '@discordjs/rest'
 import fs from 'fs/promises'
-import path from 'path'
+import path from 'path/posix'
 import logger from './log'
 import { SlashCommandBuilder, SelectMenuCover } from '../common/interactive'
 
@@ -137,9 +137,7 @@ async function putCommands(
 
     const response = await rest.put(
         Routes.applicationGuildCommands(clientId, guildId),
-        {
-            body: commandJSONs,
-        }
+        { body: commandJSONs }
     )
 
     logger.debug(response)
@@ -159,10 +157,7 @@ async function putPermissions(
         if (permissions === undefined) {
             continue
         }
-        body.push({
-            id: command.id,
-            permissions,
-        })
+        body.push({ id: command.id, permissions })
     }
 
     const rest = new REST({ version: '9' }).setToken(token)
@@ -171,9 +166,7 @@ async function putPermissions(
 
     const response = await rest.put(
         Routes.guildApplicationCommandsPermissions(clientId, guildId),
-        {
-            body,
-        }
+        { body }
     )
 
     logger.debug(response)

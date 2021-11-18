@@ -51,7 +51,7 @@ export async function load(client: Client) {
     }
     logger.event(
         'Loading Completed',
-        bgBlue('Slash Comamnd'),
+        bgBlue('slash comamnd'),
         makeLogTree(commandBuilderMap)
     )
     for (const cover of selectMenuCovers) {

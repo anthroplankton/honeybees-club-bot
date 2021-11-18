@@ -73,11 +73,12 @@ export class LogPath {
         return this.next
     }
     public [inspect.custom](depth: number, options: InspectOptions) {
-        let representation = cyan(`${this.name ?? ''}`)
-        if (this.next !== undefined) {
-            representation = `${representation}/${inspect(this.next, options)}`
+        const name = cyan(this.name ?? '')
+        if (this.next === undefined) {
+            return name
+        } else {
+            return `${name}/${inspect(this.next, options)}`
         }
-        return representation
     }
     public toString() {
         return inspect(this)
@@ -106,26 +107,26 @@ export class LogTree {
     [inspect.custom](depth: number, options: InspectOptions) {
         // ├ ─ └ │ ┐
         const space = 4
-        let representation =
-            `${this.name === undefined ? gray('─┐') : cyan(` ${this.name}`)}` +
-            (this.value === undefined ? '' : `${gray(':')} ${this.value}`)
-        if (this.children.length) {
-            const childrenRepresentation = this.children
-                .map(
-                    (child, i, arr) =>
-                        ' ' +
-                        gray(i == arr.length - 1 ? '└' : '├') +
-                        gray('─'.repeat(space - 2)) +
-                        inspect(child, options).replace(
-                            /\n/g,
-                            '\n ' +
-                                gray(i == arr.length - 1 ? ' ' : '│') +
-                                ' '.repeat(space - 2)
-                        )
-                )
-                .join('\n')
-            representation = `${representation}\n${childrenRepresentation}`
+        const representation: string[] = []
+        const name =
+            this.name === undefined ? gray('─┐') : cyan(` ${this.name}`)
+        const { value, children } = this
+        if (value === undefined) {
+            representation.push(name)
+        } else {
+            representation.push(`${name}${gray(': ')}${value}`)
         }
-        return representation
+        const childrenRepresentation = children.map((child, i, arr) => {
+            const lineToSelf =
+                (i == arr.length - 1 ? ' └' : ' ├') + '─'.repeat(space - 2)
+            const lineToSibling =
+                (i == arr.length - 1 ? '  ' : ' │') + ' '.repeat(space - 2)
+            const representation = inspect(child, options)
+                .split('\n')
+                .map((item, i) => gray(i ? lineToSibling : lineToSelf) + item)
+            return representation
+        })
+        representation.push(...childrenRepresentation.flat())
+        return representation.join('\n')
     }
 }

@@ -69,7 +69,7 @@ export const data = new SlashCommandBuilder()
 
 async function reloadSelectedData(
     interaction: CommandInteraction | MessageComponentInteraction,
-    dataNames: DataName[]
+    dataNames: readonly DataName[]
 ) {
     await Promise.all(
         dataNames.map(async dataName => {

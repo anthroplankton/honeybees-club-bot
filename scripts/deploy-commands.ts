@@ -41,7 +41,7 @@ void (async () => {
         {
             type: commandNames.length ? 'multiselect' : null,
             name: 'pickedCommandNames',
-            message: 'Pick the command modules to deploy.',
+            message: 'Pick command modules to deploy.',
             choices: commandNames.map(commandName => ({
                 title: commandName,
                 value: commandName,
@@ -60,8 +60,8 @@ void (async () => {
             const rest = new REST({ version: '9' }).setToken(token)
             const roles = await rest.get(Routes.guildRoles(guildId))
             return toAPIApplicationCommandPermissionsMap(
-                roles as RESTGetAPIGuildRolesResult,
-                commandPermissionsMap
+                commandPermissionsMap,
+                roles as RESTGetAPIGuildRolesResult
             )
         })()
     )

@@ -1,6 +1,6 @@
-import type guildIdDict from '../data-schemas/guildIdDict'
-import type cafeteriaRolesDict from '../data-schemas/cafeteriaRolesDict'
-import type commandPermissionsDict from '../data-schemas/commandPermissionsDict'
+import type GuildIdDict from '../data-schemas/guildIdDict'
+import type CafeteriaRolesDict from '../data-schemas/cafeteriaRolesDict'
+import type CommandPermissionsDict from '../data-schemas/commandPermissionsDict'
 import EventEmitter from 'events'
 import fs from 'fs/promises'
 import path from 'path/posix'
@@ -24,18 +24,18 @@ import logger from './log'
 const ajv = new Ajv()
 
 export interface Data {
-    guildIdDict: guildIdDict
-    cafeteriaRolesDict: cafeteriaRolesDict
-    commandPermissionsDict: commandPermissionsDict
+    guildIdDict: GuildIdDict
+    cafeteriaRolesDict: CafeteriaRolesDict
+    commandPermissionsDict: CommandPermissionsDict
 }
 export const data = {} as Data
 export type DataName = typeof dataNames[number]
 export const dataNames = [
-    'cafeteriaRolesDict' as const,
-    'commandPermissionsDict' as const,
-    'guildIdDict' as const,
-]
-export default data
+    'cafeteriaRolesDict',
+    'commandPermissionsDict',
+    'guildIdDict',
+] as const
+export default data as Readonly<Data>
 
 type DataKeyContainsDataName = DataName extends keyof Data ? true : false
 type DataNameContainsDataKey = keyof Data extends DataName ? true : false
@@ -46,6 +46,17 @@ const validates: { [K in DataName]?: ValidateFunction<Data[K]> } = {}
 
 const isReadySet = new Set<DataName>()
 
+interface DataEmitter {
+    emit<K extends DataName>(eventName: K, data: Data[K]): boolean
+    on<K extends DataName>(
+        eventName: K,
+        listener: (data: Data[K]) => void
+    ): this
+    once<K extends DataName>(
+        eventName: K,
+        listener: (data: Data[K]) => void
+    ): this
+}
 class DataEmitter extends EventEmitter {
     constructor() {
         super()
@@ -55,21 +66,6 @@ class DataEmitter extends EventEmitter {
     }
     public isReady(dataName: DataName) {
         return isReadySet.has(dataName)
-    }
-    public emit<K extends DataName>(eventName: K, data: Data[K]) {
-        return super.emit(eventName, data)
-    }
-    public on<K extends DataName>(
-        eventName: K,
-        listener: (data: Data[K]) => void
-    ) {
-        return super.on(eventName, listener)
-    }
-    public once<K extends DataName>(
-        eventName: K,
-        listener: (data: Data[K]) => void
-    ) {
-        return super.once(eventName, listener)
     }
 }
 export const dataEmitter: Pick<
@@ -125,7 +121,7 @@ async function loadAndWatch(dataName: DataName) {
     try {
         await loadJSON(dataName)
     } catch (err) {
-        console.error(err)
+        logger.error(err)
         dataEmitter.emit(dataName, data[dataName])
     }
     watch(dataName)
@@ -142,6 +138,6 @@ async function watch(dataName: DataName) {
             logger.info('Reloaded JSON data', bgGreen(black(dataName)))
         }
     } catch (err) {
-        console.error(err)
+        logger.error(err)
     }
 }
