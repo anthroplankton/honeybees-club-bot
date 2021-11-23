@@ -1,12 +1,25 @@
 import type {
+    BaseCommandInteraction,
     CommandInteraction,
+    ContextMenuInteraction,
+    MessageComponentInteraction,
+    ButtonInteraction,
     SelectMenuInteraction,
-    CommandInteractionOption as DjsCommandInteractionOption,
+    CommandInteractionOption,
+    EmojiIdentifierResolvable,
+    MessageButtonStyleResolvable as DjsMessageButtonStyleResolvable,
     MessageSelectOption as DjsMessageSelectOption,
     MessageSelectOptionData as DjsMessageSelectOptionData,
 } from 'discord.js'
-import type { ApplicationCommandOptionType } from 'discord-api-types/v9'
-import { MessageSelectMenu as DjsMessageSelectMenu } from 'discord.js'
+import {
+    BaseMessageComponent,
+    MessageButton,
+    MessageSelectMenu,
+} from 'discord.js'
+import {
+    ApplicationCommandType,
+    ApplicationCommandOptionType,
+} from 'discord-api-types/v9'
 import * as b from '@discordjs/builders'
 
 function SimpleMixin<T1>(Cls: abstract new () => T1) {
@@ -90,31 +103,44 @@ export type SlashCommandOption =
     | SlashCommandMentionableOption
     | SlashCommandNumberOption
 
-type CommandInteractionOption = {
+export type CommandInteractionOptions = {
     [ApplicationCommandOptionType.String]: string
     [ApplicationCommandOptionType.Integer]: number
     [ApplicationCommandOptionType.Boolean]: boolean
     [ApplicationCommandOptionType.User]: NonNullable<
-        DjsCommandInteractionOption['user']
+        CommandInteractionOption['user']
     >
     [ApplicationCommandOptionType.Channel]: NonNullable<
-        DjsCommandInteractionOption['channel']
+        CommandInteractionOption['channel']
     >
     [ApplicationCommandOptionType.Role]: NonNullable<
-        DjsCommandInteractionOption['role']
+        CommandInteractionOption['role']
     >
     [ApplicationCommandOptionType.Mentionable]: NonNullable<
-        DjsCommandInteractionOption['member' | 'role' | 'user']
+        CommandInteractionOption['member' | 'role' | 'user']
     >
     [ApplicationCommandOptionType.Number]: number
 }
 
-type interactionOptionDict = Readonly<
-    Record<string, CommandInteractionOption[SlashCommandOption['type']] | null>
+export type ApplicationCommandOptionTypeNames =
+    typeof ApplicationCommandOptionTypeNames
+export const ApplicationCommandOptionTypeNames = {
+    [ApplicationCommandOptionType.String]: 'String',
+    [ApplicationCommandOptionType.Integer]: 'Integer',
+    [ApplicationCommandOptionType.Boolean]: 'Boolean',
+    [ApplicationCommandOptionType.User]: 'User',
+    [ApplicationCommandOptionType.Channel]: 'Channel',
+    [ApplicationCommandOptionType.Role]: 'Role',
+    [ApplicationCommandOptionType.Mentionable]: 'Mentionable',
+    [ApplicationCommandOptionType.Number]: 'Number',
+} as const
+
+type InteractionOptionDict = Readonly<
+    Record<string, CommandInteractionOptions[SlashCommandOption['type']] | null>
 >
 
 interface InteractionOptions<
-    T extends interactionOptionDict = interactionOptionDict
+    T extends InteractionOptionDict = InteractionOptionDict
 > {
     interactionOptions: Partial<T>
 }
@@ -160,26 +186,44 @@ type AddOptionFunction<
     This &
         InteractionOptions<{
             [K in TName1 & TName2]:
-                | CommandInteractionOption[TOption['type']]
+                | CommandInteractionOptions[TOption['type']]
                 | (TRequired1 & TRequired2 extends true ? never : null)
         }>
 >
 
+interface SheardInteractor {
+    readonly interactor: (
+        interaction: never,
+        options: Readonly<Record<string, never>>
+    ) => Promise<void>
+    setInteractor(
+        interactor: (
+            interaction: BaseCommandInteraction,
+            options: Readonly<Record<string, unknown>>
+        ) => Promise<void>
+    ): SheardInteractor
+}
+
+interface ShardPermissions {
+    readonly permissionsKeys: string[]
+    setPermissionsKeys(...Keys: string[]): this
+}
+
 class Interactive<
     T extends Interactive<T, ShouldOmitSubcommandFunctions>,
     ShouldOmitSubcommandFunctions
-> implements InteractionOptions
+> implements InteractionOptions, SheardInteractor
 {
     public interactionOptions = {}
     public readonly interactor!: (
         interaction: CommandInteraction,
-        options: interactionOptionDict
+        options: InteractionOptionDict
     ) => Promise<void>
     public setInteractor(
         interactor: (
             interaction: CommandInteraction,
             options: {
-                [K in keyof this['interactionOptions']]-?: this['interactionOptions'][K]
+                readonly [K in keyof this['interactionOptions']]-?: this['interactionOptions'][K]
             }
         ) => Promise<void>
     ) {
@@ -190,6 +234,7 @@ class Interactive<
             SimplifyInteractionOptions<this>
         >
     }
+
     public static assignMethod<T extends Interactive<T, boolean>>(
         Cls: new () => T
     ) {
@@ -269,9 +314,10 @@ type AddSubcommandFunctionInput<T> = T | ((x: T) => T)
 type NarrowedSlashCommandBuilder =
     NarrowedSharedSlashCommandOptions<SlashCommandBuilder>
 @Interactive.assignMethod
-export class SlashCommandBuilder extends SimpleMixin(
-    b.SlashCommandBuilder
-)<NarrowedSlashCommandBuilder>() {
+export class SlashCommandBuilder
+    extends SimpleMixin(b.SlashCommandBuilder)<NarrowedSlashCommandBuilder>()
+    implements ShardPermissions
+{
     public constructor() {
         super()
         Interactive.assign(this)
@@ -361,6 +407,169 @@ export type SlashCommandSubcommandsOnlyBuilder = Pick<
     keyof b.SlashCommandSubcommandsOnlyBuilder
 >
 
+export type ContextMenuInteractionOptions = {
+    [ApplicationCommandType.User]: NonNullable<CommandInteractionOption['user']>
+    [ApplicationCommandType.Message]: NonNullable<
+        CommandInteractionOption['message']
+    >
+}
+
+export type ApplicationCommandTypeNames = typeof ApplicationCommandTypeNames
+export const ApplicationCommandTypeNames = {
+    [ApplicationCommandType.User]: 'User',
+    [ApplicationCommandType.Message]: 'Message',
+} as const
+
+// Enum number return type is not type safe
+// https://github.com/microsoft/TypeScript/issues/36756
+export interface ContextMenuCommandBuilder {
+    setType<T extends b.ContextMenuCommandType>(
+        type: T
+    ): ContextMenuCommandBuilder<
+        T extends (ApplicationCommandType.User extends 2 ? 2 : never)
+            ? ApplicationCommandType.User
+            : T extends (ApplicationCommandType.Message extends 3 ? 3 : never)
+            ? ApplicationCommandType.Message
+            : never
+    >
+    setType(type: b.ContextMenuCommandType): this
+}
+
+export class ContextMenuCommandBuilder<
+        T extends b.ContextMenuCommandType = b.ContextMenuCommandType
+    >
+    extends b.ContextMenuCommandBuilder
+    implements SheardInteractor, ShardPermissions
+{
+    public readonly interactor!: (
+        interaction: ContextMenuInteraction,
+        options: Readonly<
+            Record<string, ContextMenuInteractionOptions[this['type']]>
+        >
+    ) => Promise<void>
+    public setInteractor(
+        interactor: (
+            interaction: ContextMenuInteraction,
+            options: {
+                readonly [K in Lowercase<
+                    ApplicationCommandTypeNames[T]
+                >]: ContextMenuInteractionOptions[T]
+            }
+        ) => Promise<void>
+    ) {
+        Reflect.set(this, 'interactor', interactor)
+        return this
+    }
+
+    public readonly permissionsKeys: string[] = []
+    public setPermissionsKeys(...Keys: string[]) {
+        this.permissionsKeys.splice(0, this.permissionsKeys.length, ...Keys)
+        return this
+    }
+}
+
+type CoverInteractor = (
+    interaction: MessageComponentInteraction
+) => Promise<void>
+
+abstract class BaseCover {
+    public readonly customId!: string
+    public readonly interactor: (
+        interaction: never,
+        values: never[]
+    ) => Promise<void>
+
+    constructor(interactor: CoverInteractor)
+    constructor(customId: string, interactor: CoverInteractor)
+    constructor(
+        customIdOrInteractor: string | CoverInteractor,
+        interactor?: CoverInteractor
+    )
+    constructor(
+        customIdOrInteractor: string | CoverInteractor,
+        interactor?: CoverInteractor
+    ) {
+        if (interactor === undefined) {
+            this.interactor = customIdOrInteractor as CoverInteractor
+        } else {
+            this.customId = customIdOrInteractor as string
+            this.interactor = interactor
+        }
+    }
+
+    public setCustomId(customId: string) {
+        Reflect.set(this, 'customId', customId)
+        return this
+    }
+
+    public readonly Builder!: new (
+        data?: BaseMessageComponent
+    ) => BaseMessageComponent
+}
+
+export type MessageButtonStyleResolvable = Exclude<
+    DjsMessageButtonStyleResolvable,
+    'LINK'
+>
+
+export interface MessageCustomIdOnlyButton
+    extends Omit<
+        MessageButton,
+        | 'url'
+        | 'setURL'
+        | 'setCustomId'
+        | 'setDisabled'
+        | 'setEmoji'
+        | 'setLabel'
+        | 'setStyle'
+    > {
+    setCustomId(customId: string): this
+    setDisabled(disabled?: boolean): this
+    setEmoji(emoji: EmojiIdentifierResolvable): this
+    setLabel(label: string): this
+    setStyle(style: MessageButtonStyleResolvable): this
+}
+export const MessageCustomIdOnlyButton = MessageButton as abstract new (
+    data?: MessageCustomIdOnlyButton
+) => MessageCustomIdOnlyButton
+
+type ButtonCoverInteractor = (interaction: ButtonInteraction) => Promise<void>
+
+export interface ButtonCover {
+    readonly interactor: ButtonCoverInteractor
+}
+export class ButtonCover extends BaseCover {
+    public constructor(interactor: ButtonCoverInteractor)
+    public constructor(customId: string, interactor: ButtonCoverInteractor)
+    public constructor(
+        customIdOrInteractor: string | ButtonCoverInteractor,
+        interactor?: ButtonCoverInteractor
+    ) {
+        super(
+            customIdOrInteractor as string | CoverInteractor,
+            interactor as undefined | CoverInteractor
+        )
+    }
+
+    public readonly Builder = (cover =>
+        class MessageButton extends MessageCustomIdOnlyButton {
+            public override readonly customId!: string
+            public override setCustomId(customId: string) {
+                Reflect.defineProperty(this, 'customId', { value: customId })
+                return this
+            }
+
+            public constructor()
+            public constructor(data?: MessageButton)
+            public constructor(data?: MessageButton) {
+                super(data)
+                Reflect.defineProperty(this, 'customId', {
+                    get: () => cover.customId,
+                })
+            }
+        })(this)
+}
+
 export interface MessageSelectOption<T extends string>
     extends DjsMessageSelectOption {
     value: T
@@ -371,7 +580,7 @@ export interface MessageSelectOptionData<T extends string>
     value: T
 }
 
-interface MessageSelectMenu<T extends string> {
+export interface MessageValueRestrictedSelectMenu<T extends string> {
     options: MessageSelectOption<T>[]
     addOptions(
         ...options:
@@ -391,46 +600,42 @@ interface MessageSelectMenu<T extends string> {
             | MessageSelectOptionData<T>[][]
     ): this
 }
-abstract class MessageSelectMenu<T extends string>
-    extends DjsMessageSelectMenu
-    implements MessageSelectMenu<T> {}
+export abstract class MessageValueRestrictedSelectMenu<T extends string>
+    extends MessageSelectMenu
+    implements MessageValueRestrictedSelectMenu<T> {}
 
-type SelectMenuInteractor<Value extends string> = (
+type SelectMenuInteractor<T extends string> = (
     interaction: SelectMenuInteraction,
-    values: Value[]
+    values: T[]
 ) => Promise<void>
 
-export class SelectMenuCover<Value extends string = string> {
-    public readonly customId!: string
-    public readonly interactor: SelectMenuInteractor<Value>
-    constructor(interactor: SelectMenuInteractor<Value>)
-    constructor(customId: string, interactor: SelectMenuInteractor<Value>)
-    constructor(
-        customIdOrInteractor: string | SelectMenuInteractor<Value>,
-        interactor?: SelectMenuInteractor<Value>
+export interface SelectMenuCover<T extends string = string> {
+    readonly interactor: SelectMenuInteractor<T>
+}
+export class SelectMenuCover<T extends string = string> extends BaseCover {
+    public constructor(interactor: SelectMenuInteractor<T>)
+    public constructor(customId: string, interactor: SelectMenuInteractor<T>)
+    public constructor(
+        customIdOrInteractor: string | SelectMenuInteractor<T>,
+        interactor?: SelectMenuInteractor<T>
     ) {
-        if (interactor === undefined) {
-            this.interactor =
-                customIdOrInteractor as SelectMenuInteractor<Value>
-        } else {
-            this.customId = customIdOrInteractor as string
-            this.interactor = interactor
-        }
+        super(
+            customIdOrInteractor as string | CoverInteractor,
+            interactor as undefined | CoverInteractor
+        )
     }
-    public setCustomId(customId: string) {
-        Reflect.set(this, 'customId', customId)
-        return this
-    }
+
     public readonly Builder = (cover =>
-        class Builder extends MessageSelectMenu<Value> {
-            public readonly customId!: string
+        class MessageSelectMenu extends MessageValueRestrictedSelectMenu<T> {
+            public override readonly customId!: string
             public override setCustomId(customId: string) {
                 Reflect.defineProperty(this, 'customId', { value: customId })
                 return this
             }
-            constructor()
-            constructor(data?: Builder)
-            constructor(data?: Builder) {
+
+            public constructor()
+            public constructor(data?: MessageSelectMenu)
+            public constructor(data?: MessageSelectMenu) {
                 super(data)
                 Reflect.defineProperty(this, 'customId', {
                     get: () => cover.customId,

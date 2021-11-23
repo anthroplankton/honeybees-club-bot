@@ -22,6 +22,8 @@ const LevelNameDict = {
 export type Event =
     | 'Loading Completed'
     | 'Command Interaction Create'
+    | 'Context Menu Interaction Create'
+    | 'Button Interaction Create'
     | 'Select Menu Interaction Create'
 
 type MethodName = 'debug' | 'info' | 'warn' | 'error'
