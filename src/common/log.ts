@@ -19,12 +19,7 @@ const LevelNameDict = {
     [Level.ERROR]: 'ERROR',
 } as const
 
-export type Event =
-    | 'Loading Completed'
-    | 'Command Interaction Create'
-    | 'Context Menu Interaction Create'
-    | 'Button Interaction Create'
-    | 'Select Menu Interaction Create'
+export type Event = 'Loading Completed' | 'Interaction Create'
 
 type MethodName = 'debug' | 'info' | 'warn' | 'error'
 

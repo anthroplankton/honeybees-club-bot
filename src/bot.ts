@@ -6,7 +6,7 @@ import 'source-map-support/register'
 import { createConnection } from 'typeorm'
 import logger from './common/log'
 import * as dataManager from './common/dataManager'
-import * as interactionCreate from './events/interactionCreate'
+import * as interactionCreate from './events/interaction-create'
 
 inspect.defaultOptions.depth = 4
 inspect.defaultOptions.colors = Boolean(supportsColor)
