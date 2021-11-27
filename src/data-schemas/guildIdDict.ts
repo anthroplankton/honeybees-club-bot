@@ -1,5 +1,6 @@
 import type { Snowflake } from 'discord.js'
 import { JSONSchemaType } from 'ajv'
+import { GUILD_EXACT_PATTERN } from '../common/pattern'
 
 export const data: Readonly<Partial<Record<string, Snowflake>>> = {}
 export const schema: JSONSchemaType<typeof data> = {
@@ -9,7 +10,7 @@ export const schema: JSONSchemaType<typeof data> = {
     additionalProperties: {
         description: 'The corresponding guild ID.',
         type: 'string',
-        pattern: String.raw`^\d{18}$`,
+        pattern: GUILD_EXACT_PATTERN.source,
     },
 }
 

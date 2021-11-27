@@ -2,6 +2,7 @@ import type { APIApplicationCommandPermission } from 'discord-api-types/v9'
 import { ApplicationCommandPermissionType } from 'discord-api-types/v9'
 import { JSONSchemaType } from 'ajv'
 import { makeNameObjMap } from '../common/util'
+import { USER_EXACT_PATTERN } from '../common/pattern'
 
 export const enum CommandPermissionsKey {
     DEV = 'dev',
@@ -46,7 +47,7 @@ const guildCommandPermissionsSchema: JSONSchemaType<
                         id: {
                             description: 'The user ID.',
                             type: 'string',
-                            pattern: String.raw`^\d{18}$`,
+                            pattern: USER_EXACT_PATTERN.source,
                         },
                         type: {
                             description: 'Specify the command permission type.',
@@ -127,7 +128,7 @@ export function toAPIApplicationCommandPermissionsMap(
                 const { id, permission } = permissionObj
                 apiPermissions.push({
                     id,
-                    type: ApplicationCommandPermissionType['User'],
+                    type: ApplicationCommandPermissionType.User,
                     permission,
                 })
             } else if (permissionObj.type == 'role') {
@@ -138,7 +139,7 @@ export function toAPIApplicationCommandPermissionsMap(
                 }
                 apiPermissions.push({
                     id,
-                    type: ApplicationCommandPermissionType['Role'],
+                    type: ApplicationCommandPermissionType.Role,
                     permission,
                 })
             }
