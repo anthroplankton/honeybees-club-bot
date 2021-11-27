@@ -1,3 +1,4 @@
+import type { Snowflake } from 'discord.js'
 import type { RESTGetAPIGuildRolesResult } from 'discord-api-types/v9'
 import { Routes } from 'discord-api-types/v9'
 import { REST } from '@discordjs/rest'
@@ -6,11 +7,10 @@ import { supportsColor } from 'chalk'
 import PrettyError from 'pretty-error'
 import prompts from 'prompts'
 import { loadJSON } from '../src/common/dataManager'
-import { getCommandNames, refresh } from '../src/common/commandManager'
 import {
-    makeSpecifiedGuildCommandPermissionsMap,
-    toAPIApplicationCommandPermissionsMap,
-} from '../src/data-schemas/commandPermissionsDict'
+    getCommandNames,
+    BaseCommandRefresher,
+} from '../src/common/commandManager'
 
 if (process.env.TOKEN === undefined) {
     throw new Error('There is no token in environment.')
@@ -20,6 +20,17 @@ const token = process.env.TOKEN
 inspect.defaultOptions.depth = 4
 inspect.defaultOptions.colors = Boolean(supportsColor)
 PrettyError.start()
+
+class CommandRefresher extends BaseCommandRefresher {
+    protected override async _getCommandPermissionsDict() {
+        return await loadJSON('commandPermissionsDict')
+    }
+    protected override async _getRoles(guildId: Snowflake) {
+        const rest = new REST({ version: '9' }).setToken(token)
+        const roles = await rest.get(Routes.guildRoles(guildId))
+        return roles as RESTGetAPIGuildRolesResult
+    }
+}
 
 void (async () => {
     const guildIdDict = await loadJSON('guildIdDict')
@@ -48,21 +59,13 @@ void (async () => {
             })),
         },
     ])
-    await refresh(
-        guildId,
-        pickedCommandNames,
-        (async () => {
-            const commandPermissionsMap =
-                makeSpecifiedGuildCommandPermissionsMap(
-                    guildKey,
-                    await loadJSON('commandPermissionsDict')
-                )
-            const rest = new REST({ version: '9' }).setToken(token)
-            const roles = await rest.get(Routes.guildRoles(guildId))
-            return toAPIApplicationCommandPermissionsMap(
-                commandPermissionsMap,
-                roles as RESTGetAPIGuildRolesResult
-            )
-        })()
-    )
+    try {
+        await new CommandRefresher().refresh(
+            guildId,
+            guildKey,
+            pickedCommandNames
+        )
+    } catch (err) {
+        console.error(err)
+    }
 })()
