@@ -19,7 +19,12 @@ import {
     ContextMenuCommandBuilder,
     ButtonCover,
     SelectMenuCover,
-} from '../common/interactive'
+} from './interactive'
+import {
+    validateChatInputCommandAmount,
+    validateUserCommandAmount,
+    validateMessageCommandAmount,
+} from '../assertions/application-command-assertions'
 import {
     makeSpecifiedGuildCommandPermissionsMap,
     toAPIApplicationCommandPermissionsMap,
@@ -185,7 +190,6 @@ export abstract class BaseCommandRefresher {
         const commands = await loadCommands(commandNames)
         const commandJSONs = commands.map(command => command.toJSON())
 
-        // https://discord.com/developers/docs/interactions/application-commands#registering-a-command
         let nChatInputCommand = 0,
             nUserCommand = 0,
             nMessageCommand = 0
@@ -193,28 +197,16 @@ export abstract class BaseCommandRefresher {
             switch (type) {
                 case undefined:
                 case ApplicationCommandType.ChatInput:
-                    if (nChatInputCommand == 100) {
-                        throw new Error(
-                            'An app cannot have more then 100 chat input commands.'
-                        )
-                    }
                     nChatInputCommand += 1
+                    validateChatInputCommandAmount(nChatInputCommand)
                     break
                 case ApplicationCommandType.User:
-                    if (nUserCommand == 5) {
-                        throw new Error(
-                            'An app cannot have more then 5 user commands.'
-                        )
-                    }
                     nUserCommand += 1
+                    validateUserCommandAmount(nUserCommand)
                     break
                 case ApplicationCommandType.Message:
-                    if (nMessageCommand == 5) {
-                        throw new Error(
-                            'An app cannot have more then 5 message commands.'
-                        )
-                    }
                     nMessageCommand += 1
+                    validateMessageCommandAmount(nMessageCommand)
                     break
             }
         }
