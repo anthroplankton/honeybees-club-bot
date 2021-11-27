@@ -6,11 +6,11 @@ import { inspect } from 'util'
 import { supportsColor } from 'chalk'
 import PrettyError from 'pretty-error'
 import prompts from 'prompts'
-import { loadJSON } from '../src/common/dataManager'
+import { loadJSON } from '../src/common/data-manager'
 import {
     getCommandNames,
     BaseCommandRefresher,
-} from '../src/common/commandManager'
+} from '../src/common/command-manager'
 
 if (process.env.TOKEN === undefined) {
     throw new Error('There is no token in environment.')

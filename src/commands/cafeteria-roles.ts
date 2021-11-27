@@ -3,9 +3,9 @@ import type { MessageSelectOptionData } from '../common/interactive'
 import { MessageActionRow, InteractionCollector, Permissions } from 'discord.js'
 import logger from '../common/log'
 import { makeNameObjMap } from '../common/util'
-import data, { dataEmitter } from '../common/dataManager'
+import data, { dataEmitter } from '../common/data-manager'
 import { SlashCommandBuilder, SelectMenuCover } from '../common/interactive'
-import { CommandPermissionsKey } from '../data-schemas/commandPermissionsDict'
+import { CommandPermissionsKey } from '../data-schemas/command-permissions-dict'
 
 export const role = new SlashCommandBuilder()
     .setDescription('handle role')

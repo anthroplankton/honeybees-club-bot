@@ -8,7 +8,7 @@ import {
     ButtonCover,
     SelectMenuCover,
 } from '../common/interactive'
-import { CommandPermissionsKey } from '../data-schemas/commandPermissionsDict'
+import { CommandPermissionsKey } from '../data-schemas/command-permissions-dict'
 
 const button = new SlashCommandSubcommandBuilder()
     .setName('button')

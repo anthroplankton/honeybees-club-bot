@@ -1,12 +1,12 @@
 import type { Client, Interaction } from 'discord.js'
 import logger from '../../common/log'
-import { loadInteractive } from '../../common/commandManager'
-import { CommandInteractionCreateListener } from './commandInteractionCreate'
-import { ContextMenuInteractionCreateListener } from './contextMenuInteractionCreate'
+import { loadInteractive } from '../../common/command-manager'
+import { CommandInteractionCreateListener } from './command-interaction-create'
+import { ContextMenuInteractionCreateListener } from './context-menu-interaction-create'
 import {
     ButtonInteractionCreateListener,
     SelectMenuInteractionCreateListener,
-} from './messageComponentInteractionCreate'
+} from './message-component-interaction-create'
 
 const commandListener = new CommandInteractionCreateListener()
 const contextMenuListener = new ContextMenuInteractionCreateListener()

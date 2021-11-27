@@ -5,7 +5,7 @@ import PrettyError from 'pretty-error'
 import 'source-map-support/register'
 import { createConnection } from 'typeorm'
 import logger from './common/log'
-import * as dataManager from './common/dataManager'
+import * as dataManager from './common/data-manager'
 import * as interactionCreate from './events/interaction-create'
 
 inspect.defaultOptions.depth = 4

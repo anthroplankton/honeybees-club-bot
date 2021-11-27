@@ -4,11 +4,6 @@
   "required": [],
   "additionalProperties": {
     "description": "Role objects for select menu option.",
-    "default": [
-      {
-        "emoji": ""
-      }
-    ],
     "type": "array",
     "uniqueItems": true,
     "items": {

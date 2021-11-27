@@ -10,7 +10,7 @@ import { ApplicationCommandOptionType } from 'discord-api-types/v9'
 import { bgGray } from 'chalk'
 import { LogPath, LogTree } from '../../common/log'
 import { ApplicationCommandOptionTypeNames } from '../../common/interactive'
-import { BaseInteractionCreateListener } from './baseInteractionCreate'
+import { BaseInteractionCreateListener } from './base-interaction-create'
 
 type SlashCommandBuilderFamily =
     | SlashCommandBuilder

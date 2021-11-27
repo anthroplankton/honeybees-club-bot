@@ -1,12 +1,13 @@
-import type GuildIdDict from '../data-schemas/guildIdDict'
-import type CafeteriaRolesDict from '../data-schemas/cafeteriaRolesDict'
-import type CommandPermissionsDict from '../data-schemas/commandPermissionsDict'
+import type CafeteriaRolesDict from '../data-schemas/cafeteria-roles-dict'
+import type CommandPermissionsDict from '../data-schemas/command-permissions-dict'
+import type GuildIdDict from '../data-schemas/guild-id-dict'
 import EventEmitter from 'events'
 import fs from 'fs/promises'
 import path from 'path/posix'
 import { inspect } from 'util'
 import Ajv, { ValidateFunction } from 'ajv'
 import { black, bgGreen, bgBlue } from 'chalk'
+import { paramCase } from 'change-case'
 import logger from './log'
 
 /* Ajv 8.6.0 makes VSCode IntelliSense extremely slow
@@ -110,11 +111,15 @@ export async function loadJSON<K extends DataName>(
 }
 
 export function getFilename(dataName: DataName) {
-    return path.format({ dir: './data', name: dataName, ext: '.json' })
+    return path.format({
+        dir: './data',
+        name: paramCase(dataName),
+        ext: '.json',
+    })
 }
 
 export async function importDataSchema(dataName: DataName) {
-    return await import(path.join('../data-schemas', dataName))
+    return await import(path.join('../data-schemas', paramCase(dataName)))
 }
 
 async function loadAndWatch(dataName: DataName) {

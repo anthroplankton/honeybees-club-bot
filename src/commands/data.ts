@@ -2,18 +2,18 @@ import type {
     CommandInteraction,
     MessageComponentInteraction,
 } from 'discord.js'
-import type { DataName } from '../common/dataManager'
+import type { DataName } from '../common/data-manager'
 import { MessageActionRow, InteractionCollector } from 'discord.js'
 import { inlineCode, blockQuote } from '@discordjs/builders'
 import { black, bgGreen } from 'chalk'
 import logger from '../common/log'
-import { dataNames, loadJSON } from '../common/dataManager'
+import { dataNames, loadJSON } from '../common/data-manager'
 import {
     SlashCommandBuilder,
     SlashCommandSubcommandBuilder,
     SelectMenuCover,
 } from '../common/interactive'
-import { CommandPermissionsKey } from '../data-schemas/commandPermissionsDict'
+import { CommandPermissionsKey } from '../data-schemas/command-permissions-dict'
 
 const all = new SlashCommandSubcommandBuilder()
     .setName('all')

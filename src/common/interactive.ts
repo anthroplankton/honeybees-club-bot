@@ -146,9 +146,9 @@ interface InteractionOptions<
 }
 
 type SimplifyInteractionOptions<T extends InteractionOptions> =
-    T extends InteractionOptions<infer TOptions>
+    T extends InteractionOptions<infer TInteractionOptions>
         ? InteractionOptions<{
-              readonly [K in keyof TOptions]: TOptions[K]
+              readonly [K in keyof TInteractionOptions]: TInteractionOptions[K]
           }>
         : never
 

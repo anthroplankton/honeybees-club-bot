@@ -5,7 +5,7 @@ import type {
 } from 'discord.js'
 import type { ButtonCover, SelectMenuCover } from '../../common/interactive'
 import { LogPath, LogTree } from '../../common/log'
-import { BaseInteractionCreateListener } from './baseInteractionCreate'
+import { BaseInteractionCreateListener } from './base-interaction-create'
 
 export abstract class MessageComponentInteractionCreateListener<
     TInteraction extends MessageComponentInteraction,

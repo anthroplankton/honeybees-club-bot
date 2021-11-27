@@ -19,7 +19,6 @@ export const schema: JSONSchemaType<typeof data> = {
     required: [],
     additionalProperties: {
         description: 'Role objects for select menu option.',
-        default: [{ emoji: '' }],
         type: 'array',
         uniqueItems: true,
         items: {

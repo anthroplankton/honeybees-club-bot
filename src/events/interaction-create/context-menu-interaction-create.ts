@@ -3,7 +3,7 @@ import type { ContextMenuCommandBuilder } from '../../common/interactive'
 import { bgGray } from 'chalk'
 import { LogPath, LogTree } from '../../common/log'
 import { ApplicationCommandTypeNames } from '../../common/interactive'
-import { BaseInteractionCreateListener } from './baseInteractionCreate'
+import { BaseInteractionCreateListener } from './base-interaction-create'
 
 type ContextMenuCommandBuilderMap = Map<string, ContextMenuCommandBuilder>
 

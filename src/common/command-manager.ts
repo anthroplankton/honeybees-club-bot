@@ -4,7 +4,7 @@ import type {
     RESTPutAPIApplicationCommandsResult,
     RESTPutAPIGuildApplicationCommandsPermissionsJSONBody,
 } from 'discord-api-types/v9'
-import type CommandPermissionsDict from '../data-schemas/commandPermissionsDict'
+import type CommandPermissionsDict from '../data-schemas/command-permissions-dict'
 import { ApplicationCommandType, Routes } from 'discord-api-types/v9'
 import {
     SlashCommandBuilder as DjsSlashCommandBuilder,
@@ -23,7 +23,7 @@ import {
 import {
     makeSpecifiedGuildCommandPermissionsMap,
     toAPIApplicationCommandPermissionsMap,
-} from '../data-schemas/commandPermissionsDict'
+} from '../data-schemas/command-permissions-dict'
 
 if (process.env.CLIENTID === undefined) {
     throw new Error('There is no client id in environment.')

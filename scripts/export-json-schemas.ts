@@ -5,7 +5,7 @@ import {
     dataNames,
     getFilename,
     importDataSchema,
-} from '../src/common/dataManager'
+} from '../src/common/data-manager'
 
 const exportJSONSchema = Promise.all(
     dataNames.map(async dataName => {
