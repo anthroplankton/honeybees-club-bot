@@ -3,6 +3,7 @@ import type {
     MessageComponentInteraction,
 } from 'discord.js'
 import type { DataName } from '../common/data-manager'
+
 import { MessageActionRow, InteractionCollector } from 'discord.js'
 import { inlineCode, blockQuote } from '@discordjs/builders'
 import { black, bgGreen } from 'chalk'

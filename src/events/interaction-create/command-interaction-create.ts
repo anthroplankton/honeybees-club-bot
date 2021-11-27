@@ -6,6 +6,7 @@ import type {
     SlashCommandSubcommandGroupBuilder,
     SlashCommandSubcommandBuilder,
 } from '../../common/interactive'
+
 import { ApplicationCommandOptionType } from 'discord-api-types/v9'
 import { bgGray } from 'chalk'
 import { LogPath, LogTree } from '../../common/log'
@@ -44,29 +45,32 @@ export class CommandInteractionCreateListener extends BaseInteractionCreateListe
     }
 
     protected override _setInteractive(
-        map: SlashCommandBuilderMap,
-        builder: SlashCommandBuilderFamily
+        builder: SlashCommandBuilderFamily,
+        map = this._interactiveMap
     ) {
         const children: SlashCommandBuilderMap = new Map()
         map.set(builder.name, { builder, children })
         for (const option of builder.options) {
             if (isSubcommandGroup(option)) {
-                this._setInteractive(children, option)
+                this._setInteractive(option, children)
             } else if (isSubcommand(option)) {
-                this._setInteractive(children, option)
+                this._setInteractive(option, children)
             }
         }
     }
 
-    protected override _getInteractive(
-        map: SlashCommandBuilderMap,
-        { commandName, options }: CommandInteraction
-    ): [node: SlashCommandBuilderNode | undefined, commandPath: LogPath] {
+    protected override _getInteractive({
+        commandName,
+        options,
+    }: CommandInteraction): [
+        node: SlashCommandBuilderNode | undefined,
+        commandPath: LogPath
+    ] {
         const subcommandGroupName = options.getSubcommandGroup(false)
         const subcommandName = options.getSubcommand(false)
         const commandPath = new LogPath()
         let [node, commandPathTail] = this._getSlashCommandBuilderNode(
-            map,
+            this._interactiveMap,
             commandName,
             commandPath
         )
@@ -97,7 +101,7 @@ export class CommandInteractionCreateListener extends BaseInteractionCreateListe
         return [node, commandPath]
     }
 
-    protected override _makeLogTree(map: SlashCommandBuilderMap) {
+    protected override _makeLogTree(map = this._interactiveMap) {
         const logTree = new LogTree()
         for (const [name, node] of map) {
             const child = node.children.size

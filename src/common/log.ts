@@ -1,5 +1,6 @@
 import type { InspectOptions } from 'util'
 import type { Chalk } from 'chalk'
+
 import { inspect } from 'util'
 import { red, green, yellow, blue, cyan, gray } from 'chalk'
 

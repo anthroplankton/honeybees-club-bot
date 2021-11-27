@@ -1,8 +1,9 @@
 import type { APIApplicationCommandPermission } from 'discord-api-types/v9'
+
 import { ApplicationCommandPermissionType } from 'discord-api-types/v9'
 import { JSONSchemaType } from 'ajv'
-import { makeNameObjMap } from '../common/util'
 import { USER_EXACT_PATTERN } from '../common/pattern'
+import { makeNameObjectMap } from '../common/util'
 
 export const enum CommandPermissionsKey {
     DEV = 'dev',
@@ -119,7 +120,7 @@ export function toAPIApplicationCommandPermissionsMap(
     map: Map<string, CommandPermission[]>,
     roles: { name: string; id: string }[]
 ) {
-    const roleMap = makeNameObjMap(...roles)
+    const roleMap = makeNameObjectMap(...roles)
     const apiMap = new Map<string, APIApplicationCommandPermission[]>()
     for (const [key, permissions] of map) {
         const apiPermissions: APIApplicationCommandPermission[] = []

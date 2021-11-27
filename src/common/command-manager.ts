@@ -5,6 +5,7 @@ import type {
     RESTPutAPIGuildApplicationCommandsPermissionsJSONBody,
 } from 'discord-api-types/v9'
 import type CommandPermissionsDict from '../data-schemas/command-permissions-dict'
+
 import { ApplicationCommandType, Routes } from 'discord-api-types/v9'
 import {
     SlashCommandBuilder as DjsSlashCommandBuilder,
@@ -56,7 +57,7 @@ export async function loadCommandModules(
     client?: Client,
     commandNames?: CommandName[]
 ) {
-    commandNames = commandNames || (await getCommandNames())
+    commandNames ||= await getCommandNames()
     const commandModules = await Promise.all(
         commandNames.map(async commandName => {
             const commandModule = await import(

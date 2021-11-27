@@ -11,6 +11,7 @@ import type {
     MessageSelectOption as DjsMessageSelectOption,
     MessageSelectOptionData as DjsMessageSelectOptionData,
 } from 'discord.js'
+
 import {
     BaseMessageComponent,
     MessageButton,

@@ -1,5 +1,5 @@
-export function makeNameObjMap<TName, T extends { readonly name: TName }>(
-    ...objs: ({ readonly name: TName } & T)[]
+export function makeNameObjectMap<TName, T extends { readonly name: TName }>(
+    ...objects: ({ readonly name: TName } & T)[]
 ) {
-    return new Map<TName, T>(objs.map(obj => [obj.name, obj]))
+    return new Map<TName, T>(objects.map(object => [object.name, object]))
 }

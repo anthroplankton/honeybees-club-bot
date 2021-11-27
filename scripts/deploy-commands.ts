@@ -1,5 +1,6 @@
 import type { Snowflake } from 'discord.js'
 import type { RESTGetAPIGuildRolesResult } from 'discord-api-types/v9'
+
 import { Routes } from 'discord-api-types/v9'
 import { REST } from '@discordjs/rest'
 import { inspect } from 'util'

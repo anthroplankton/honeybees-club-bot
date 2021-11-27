@@ -2,7 +2,7 @@ import type { Client, Snowflake } from 'discord.js'
 import type { MessageSelectOptionData } from '../common/interactive'
 import { MessageActionRow, InteractionCollector, Permissions } from 'discord.js'
 import logger from '../common/log'
-import { makeNameObjMap } from '../common/util'
+import { makeNameObjectMap } from '../common/util'
 import data, { dataEmitter } from '../common/data-manager'
 import { SlashCommandBuilder, SelectMenuCover } from '../common/interactive'
 import { CommandPermissionsKey } from '../data-schemas/command-permissions-dict'
@@ -172,8 +172,8 @@ async function makeGuildIdRoleOptionsEntry(
         // https://github.com/discordjs/discord.js/blob/13.3.1/src/structures/Guild.js#L428
         guild.fetch().then(guild => guild.emojis.fetch()),
     ])
-    const roleMap = makeNameObjMap(...roleCollection.values())
-    const emojiMap = makeNameObjMap(...emojiCollection.values())
+    const roleMap = makeNameObjectMap(...roleCollection.values())
+    const emojiMap = makeNameObjectMap(...emojiCollection.values())
 
     const roleOptionSet = new Set<string>()
     const roleOptions: RoleOption[] = []

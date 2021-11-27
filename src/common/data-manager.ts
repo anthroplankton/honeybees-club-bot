@@ -1,6 +1,7 @@
 import type CafeteriaRolesDict from '../data-schemas/cafeteria-roles-dict'
 import type CommandPermissionsDict from '../data-schemas/command-permissions-dict'
 import type GuildIdDict from '../data-schemas/guild-id-dict'
+
 import EventEmitter from 'events'
 import fs from 'fs/promises'
 import path from 'path/posix'

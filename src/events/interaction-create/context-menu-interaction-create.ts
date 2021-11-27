@@ -1,11 +1,10 @@
 import type { ContextMenuInteraction } from 'discord.js'
 import type { ContextMenuCommandBuilder } from '../../common/interactive'
+
 import { bgGray } from 'chalk'
 import { LogPath, LogTree } from '../../common/log'
 import { ApplicationCommandTypeNames } from '../../common/interactive'
 import { BaseInteractionCreateListener } from './base-interaction-create'
-
-type ContextMenuCommandBuilderMap = Map<string, ContextMenuCommandBuilder>
 
 export class ContextMenuInteractionCreateListener extends BaseInteractionCreateListener<
     ContextMenuInteraction,
@@ -15,25 +14,25 @@ export class ContextMenuInteractionCreateListener extends BaseInteractionCreateL
         super('context menu')
     }
 
-    protected override _setInteractive(
-        map: ContextMenuCommandBuilderMap,
-        builder: ContextMenuCommandBuilder
-    ) {
-        map.set(builder.name, builder)
+    protected override _setInteractive(builder: ContextMenuCommandBuilder) {
+        this._interactiveMap.set(builder.name, builder)
     }
 
-    protected override _getInteractive(
-        map: ContextMenuCommandBuilderMap,
-        { commandName }: ContextMenuInteraction
-    ): [builder: ContextMenuCommandBuilder | undefined, commandPath: LogPath] {
-        const builder = map.get(commandName)
+    protected override _getInteractive({
+        commandName,
+    }: ContextMenuInteraction): [
+        builder: ContextMenuCommandBuilder | undefined,
+        commandPath: LogPath
+    ] {
+        const builder = this._interactiveMap.get(commandName)
         const commandPath = new LogPath().setName(commandName)
         return [builder, commandPath]
     }
 
-    protected override _makeLogTree(map: ContextMenuCommandBuilderMap) {
+    protected override _makeLogTree() {
+        const builders = this._interactiveMap.values()
         const logTree = new LogTree()
-        for (const { type, name, permissionsKeys } of map.values()) {
+        for (const { type, name, permissionsKeys } of builders) {
             const typeName = ApplicationCommandTypeNames[type]
             const child = new LogTree()
                 .setName(name)

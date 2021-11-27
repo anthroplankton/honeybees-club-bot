@@ -1,4 +1,5 @@
 import type { Client, Interaction } from 'discord.js'
+
 import logger from '../../common/log'
 import { loadInteractive } from '../../common/command-manager'
 import { CommandInteractionCreateListener } from './command-interaction-create'
@@ -30,13 +31,13 @@ export async function load(client: Client) {
 export async function listener(interaction: Interaction) {
     try {
         if (interaction.isCommand()) {
-            await commandListener.handle(interaction)
+            await commandListener.interact(interaction)
         } else if (interaction.isContextMenu()) {
-            await contextMenuListener.handle(interaction)
+            await contextMenuListener.interact(interaction)
         } else if (interaction.isButton()) {
-            await buttonListener.handle(interaction)
+            await buttonListener.interact(interaction)
         } else if (interaction.isSelectMenu()) {
-            await selectMenuListener.handle(interaction)
+            await selectMenuListener.interact(interaction)
         }
     } catch (err) {
         logger.error(err)

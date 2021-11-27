@@ -1,4 +1,5 @@
 import type { Snowflake } from 'discord.js'
+
 import { JSONSchemaType } from 'ajv'
 import { GUILD_EXACT_PATTERN } from '../common/pattern'
 

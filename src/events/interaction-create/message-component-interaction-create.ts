@@ -4,6 +4,7 @@ import type {
     SelectMenuInteraction,
 } from 'discord.js'
 import type { ButtonCover, SelectMenuCover } from '../../common/interactive'
+
 import { LogPath, LogTree } from '../../common/log'
 import { BaseInteractionCreateListener } from './base-interaction-create'
 
@@ -11,25 +12,21 @@ export abstract class MessageComponentInteractionCreateListener<
     TInteraction extends MessageComponentInteraction,
     TCover extends { customId: string }
 > extends BaseInteractionCreateListener<TInteraction, TCover> {
-    protected override _setInteractive(
-        map: Map<string, TCover>,
-        cover: TCover
-    ) {
-        map.set(cover.customId, cover)
+    protected override _setInteractive(cover: TCover) {
+        this._interactiveMap.set(cover.customId, cover)
     }
 
-    protected override _getInteractive(
-        map: Map<string, TCover>,
-        { customId }: TInteraction
-    ): [cover: TCover | undefined, componentPath: LogPath] {
-        const cover = map.get(customId)
+    protected override _getInteractive({
+        customId,
+    }: TInteraction): [cover: TCover | undefined, componentPath: LogPath] {
+        const cover = this._interactiveMap.get(customId)
         const componentPath = new LogPath().setName(customId)
         return [cover, componentPath]
     }
 
-    protected override _makeLogTree(map: Map<string, TCover>) {
+    protected override _makeLogTree() {
         const logTree = new LogTree().addChildren(
-            ...Array.from(map.keys(), customId =>
+            ...Array.from(this._interactiveMap.keys(), customId =>
                 new LogTree().setName(customId)
             )
         )

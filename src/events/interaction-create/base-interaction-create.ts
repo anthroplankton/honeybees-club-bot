@@ -1,5 +1,6 @@
 import type { Interaction } from 'discord.js'
 import type { LogPath, LogTree } from '../../common/log'
+
 import { bgBlue } from 'chalk'
 import logger from '../../common/log'
 
@@ -9,7 +10,7 @@ export abstract class BaseInteractionCreateListener<
     TEndInteractive = TInteractive
 > {
     public readonly name: string
-    private readonly _interactiveMap: Map<string, TEndInteractive>
+    protected readonly _interactiveMap: Map<string, TEndInteractive>
 
     public constructor(name: string) {
         this.name = name
@@ -18,38 +19,31 @@ export abstract class BaseInteractionCreateListener<
 
     public load(interactives: TInteractive[]) {
         for (const interactive of interactives) {
-            this._setInteractive(this._interactiveMap, interactive)
+            this._setInteractive(interactive)
         }
         logger.event(
             'Loading Completed',
             bgBlue(this.name),
-            this._makeLogTree(this._interactiveMap)
+            this._makeLogTree()
         )
     }
 
-    public async handle(interaction: TInteraction) {
-        const [interactive, interactionPath] = this._getInteractive(
-            this._interactiveMap,
-            interaction
-        )
+    public async interact(interaction: TInteraction) {
+        const [interactive, interactionPath] = this._getInteractive(interaction)
         if (interactive == undefined) {
             throw new Error(
-                `The ${this.name} "${interactionPath}" does not bind.`
+                `The ${this.name} interaction "${interactionPath}" does not bind.`
             )
         }
         logger.event('Interaction Create', bgBlue(this.name), interactionPath)
         await this._interact(interaction, interactive)
     }
 
-    protected abstract _setInteractive(
-        map: Map<string, TEndInteractive>,
-        interactive: TInteractive
-    ): void
+    protected abstract _setInteractive(interactive: TInteractive): void
     protected abstract _getInteractive(
-        map: Map<string, TEndInteractive>,
         interaction: TInteraction
     ): [interactive: TEndInteractive | undefined, interactionPath: LogPath]
-    protected abstract _makeLogTree(map: Map<string, TEndInteractive>): LogTree
+    protected abstract _makeLogTree(): LogTree
     protected abstract _interact(
         interaction: TInteraction,
         interactive: TEndInteractive
