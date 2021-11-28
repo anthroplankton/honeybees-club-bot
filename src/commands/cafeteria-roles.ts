@@ -1,5 +1,6 @@
 import type { Client, Snowflake } from 'discord.js'
 import type { MessageSelectOptionData } from '../common/interactive'
+
 import { MessageActionRow, InteractionCollector, Permissions } from 'discord.js'
 import logger from '../common/log'
 import { makeNameObjectMap } from '../common/util'
@@ -70,6 +71,13 @@ export const setCafeteriaRolesSelectMenu = new SelectMenuCover(
     async (interaction, roleIds: Snowflake[]) => {
         const guild = await interaction.client.guilds.fetch(interaction.guildId)
         const member = await guild.members.fetch(interaction.user)
+        const cafeteriaRoleIdSet =
+            guildIdCafeteriaRoleIdSetMap.get(guild.id) ?? new Set()
+        for (const roleId of member.roles.cache.keys()) {
+            if (!cafeteriaRoleIdSet.has(roleId)) {
+                roleIds.push(roleId)
+            }
+        }
         await member.roles.set(roleIds)
         await interaction.update({ content: '身分組設定完成', components: [] })
     }
@@ -79,6 +87,7 @@ const guildIdSelectMenuMap = new Map<
     Snowflake,
     InstanceType<typeof setCafeteriaRolesSelectMenu.Builder>
 >()
+const guildIdCafeteriaRoleIdSetMap = new Map<Snowflake, Set<Snowflake>>()
 
 type CafeteriaRolesDict = typeof data.cafeteriaRolesDict
 type RoleOption = MessageSelectOptionData<Snowflake>
@@ -141,6 +150,7 @@ async function makeGuildIdSelectMenuMap(
     })
     // Note: Do Not use await in the period of setting guildIdSelectMenuMap
     guildIdSelectMenuMap.clear()
+    guildIdCafeteriaRoleIdSetMap.clear()
     for (const [guildId, roles] of guildIdRolesEntries) {
         const componet = new setCafeteriaRolesSelectMenu.Builder()
             .setPlaceholder('請在兩分鐘內選擇身分組')
@@ -148,6 +158,8 @@ async function makeGuildIdSelectMenuMap(
             .setMaxValues(roles.length)
             .setOptions(roles)
         guildIdSelectMenuMap.set(guildId, componet)
+        const set = new Set(roles.map(role => role.value))
+        guildIdCafeteriaRoleIdSetMap.set(guildId, set)
     }
 }
 
@@ -177,7 +189,11 @@ async function makeGuildIdRoleOptionsEntry(
 
     const roleOptionSet = new Set<string>()
     const roleOptions: RoleOption[] = []
-    for (const { role: roleName, emoji: emojiName } of roleEmojiObjs) {
+    for (const {
+        role: roleName,
+        emoji: emojiName,
+        description,
+    } of roleEmojiObjs) {
         if (roleOptionSet.has(roleName)) {
             logger.warn(
                 `The role "${roleName}" of the guild "${guildKey}" repeats on "cafeteriaRolesDict".`
@@ -200,6 +216,7 @@ async function makeGuildIdRoleOptionsEntry(
         roleOptions.push({
             label: roleName,
             value: role.id,
+            description: description ?? undefined,
             emoji: emojiName ? emojiMap.get(emojiName) : undefined,
         })
     }
