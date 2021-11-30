@@ -3,21 +3,24 @@
   "json.schemas": [
     {
       "fileMatch": [
-        "data/cafeteriaRolesDict.json",
-        "data/cafeteriaRolesDict.json.example"
+        "data/cafeteria-roles-dict.json",
+        "data/cafeteria-roles-dict.json.example"
       ],
-      "url": "./data/cafeteriaRolesDict.json.schema"
+      "url": "./data/cafeteria-roles-dict.json.schema"
     },
     {
       "fileMatch": [
-        "data/commandPermissionsDict.json",
-        "data/commandPermissionsDict.json.example"
+        "data/command-permissions-dict.json",
+        "data/command-permissions-dict.json.example"
       ],
-      "url": "./data/commandPermissionsDict.json.schema"
+      "url": "./data/command-permissions-dict.json.schema"
     },
     {
-      "fileMatch": ["data/guildIdDict.json", "data/guildIdDict.json.example"],
-      "url": "./data/guildIdDict.json.schema"
+      "fileMatch": [
+        "data/guild-id-dict.json",
+        "data/guild-id-dict.json.example"
+      ],
+      "url": "./data/guild-id-dict.json.schema"
     }
   ]
 }

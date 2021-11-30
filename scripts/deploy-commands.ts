@@ -1,16 +1,17 @@
 import type { RESTGetAPIGuildRolesResult } from 'discord-api-types/v9'
+
 import { Routes } from 'discord-api-types/v9'
 import { REST } from '@discordjs/rest'
 import { inspect } from 'util'
 import { supportsColor } from 'chalk'
 import PrettyError from 'pretty-error'
 import prompts from 'prompts'
-import { loadJSON } from '../src/common/dataManager'
-import { getCommandNames, refresh } from '../src/common/commandManager'
+import { loadJSON } from '../src/common/data-manager'
+import { getCommandNames, refresh } from '../src/common/command-manager'
 import {
     makeSpecifiedGuildCommandPermissionsMap,
     toAPIApplicationCommandPermissionsMap,
-} from '../src/data-schemas/commandPermissionsDict'
+} from '../src/data-schemas/command-permissions-dict'
 
 if (process.env.TOKEN === undefined) {
     throw new Error('There is no token in environment.')

@@ -16,10 +16,11 @@ import type {
     ButtonCover,
     SelectMenuCover,
 } from '../common/interactive'
+
 import { ApplicationCommandOptionType } from 'discord-api-types/v9'
 import { bgBlue, bgGray } from 'chalk'
 import logger, { LogPath, LogTree } from '../common/log'
-import { getInteractive } from '../common/commandManager'
+import { getInteractive } from '../common/command-manager'
 import {
     ApplicationCommandTypeNames,
     ApplicationCommandOptionTypeNames,
