@@ -1,4 +1,4 @@
-import { JSONSchemaType } from 'ajv'
+import type { JSONSchemaType } from 'ajv'
 
 export const data: Readonly<
     Partial<
@@ -19,7 +19,6 @@ export const schema: JSONSchemaType<typeof data> = {
     required: [],
     additionalProperties: {
         description: 'Role objects for select menu option.',
-        default: [{ emoji: '' }],
         type: 'array',
         uniqueItems: true,
         items: {

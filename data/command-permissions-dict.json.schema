@@ -1,120 +1,120 @@
 {
-    "description": "Map guild keys to an array of command permission objects.",
-    "type": "object",
-    "required": ["dev", "normal"],
-    "properties": {
-        "dev": {
-            "description": "Map guild keys to an array of command permission objects.",
-            "type": "object",
-            "required": [],
-            "additionalProperties": {
-                "description": "Command permission objects.",
-                "type": "array",
-                "items": {
-                    "anyOf": [
-                        {
-                            "description": "A Command permission object for a user.",
-                            "type": "object",
-                            "required": ["id", "type", "permission"],
-                            "properties": {
-                                "id": {
-                                    "description": "The user ID.",
-                                    "type": "string",
-                                    "pattern": "^\\d{18}$"
-                                },
-                                "type": {
-                                    "description": "Specify the command permission type.",
-                                    "type": "string",
-                                    "const": "user"
-                                },
-                                "permission": {
-                                    "description": "True to allow, false, to disallow.",
-                                    "type": "boolean"
-                                }
-                            },
-                            "additionalProperties": false
-                        },
-                        {
-                            "description": "A Command permission object for a role",
-                            "type": "object",
-                            "required": ["name", "type", "permission"],
-                            "properties": {
-                                "name": {
-                                    "description": "A Command permission object for a user.",
-                                    "type": "string"
-                                },
-                                "type": {
-                                    "description": "Specify the command permission type.",
-                                    "type": "string",
-                                    "const": "role"
-                                },
-                                "permission": {
-                                    "description": "True to allow, false, to disallow.",
-                                    "type": "boolean"
-                                }
-                            },
-                            "additionalProperties": false
-                        }
-                    ]
+  "description": "Map guild keys to an array of command permission objects.",
+  "type": "object",
+  "required": ["dev", "normal"],
+  "properties": {
+    "dev": {
+      "description": "Map guild keys to an array of command permission objects.",
+      "type": "object",
+      "required": [],
+      "additionalProperties": {
+        "description": "Command permission objects.",
+        "type": "array",
+        "items": {
+          "anyOf": [
+            {
+              "description": "A Command permission object for a user.",
+              "type": "object",
+              "required": ["id", "type", "permission"],
+              "properties": {
+                "id": {
+                  "description": "The user ID.",
+                  "type": "string",
+                  "pattern": "^\\d{18}$"
+                },
+                "type": {
+                  "description": "Specify the command permission type.",
+                  "type": "string",
+                  "const": "user"
+                },
+                "permission": {
+                  "description": "True to allow, false, to disallow.",
+                  "type": "boolean"
                 }
-            }
-        },
-        "normal": {
-            "description": "Map guild keys to an array of command permission objects.",
-            "type": "object",
-            "required": [],
-            "additionalProperties": {
-                "description": "Command permission objects.",
-                "type": "array",
-                "items": {
-                    "anyOf": [
-                        {
-                            "description": "A Command permission object for a user.",
-                            "type": "object",
-                            "required": ["id", "type", "permission"],
-                            "properties": {
-                                "id": {
-                                    "description": "The user ID.",
-                                    "type": "string",
-                                    "pattern": "^\\d{18}$"
-                                },
-                                "type": {
-                                    "description": "Specify the command permission type.",
-                                    "type": "string",
-                                    "const": "user"
-                                },
-                                "permission": {
-                                    "description": "True to allow, false, to disallow.",
-                                    "type": "boolean"
-                                }
-                            },
-                            "additionalProperties": false
-                        },
-                        {
-                            "description": "A Command permission object for a role",
-                            "type": "object",
-                            "required": ["name", "type", "permission"],
-                            "properties": {
-                                "name": {
-                                    "description": "A Command permission object for a user.",
-                                    "type": "string"
-                                },
-                                "type": {
-                                    "description": "Specify the command permission type.",
-                                    "type": "string",
-                                    "const": "role"
-                                },
-                                "permission": {
-                                    "description": "True to allow, false, to disallow.",
-                                    "type": "boolean"
-                                }
-                            },
-                            "additionalProperties": false
-                        }
-                    ]
+              },
+              "additionalProperties": false
+            },
+            {
+              "description": "A Command permission object for a role",
+              "type": "object",
+              "required": ["name", "type", "permission"],
+              "properties": {
+                "name": {
+                  "description": "A Command permission object for a user.",
+                  "type": "string"
+                },
+                "type": {
+                  "description": "Specify the command permission type.",
+                  "type": "string",
+                  "const": "role"
+                },
+                "permission": {
+                  "description": "True to allow, false, to disallow.",
+                  "type": "boolean"
                 }
+              },
+              "additionalProperties": false
             }
+          ]
         }
+      }
     },
-    "additionalProperties": false
+    "normal": {
+      "description": "Map guild keys to an array of command permission objects.",
+      "type": "object",
+      "required": [],
+      "additionalProperties": {
+        "description": "Command permission objects.",
+        "type": "array",
+        "items": {
+          "anyOf": [
+            {
+              "description": "A Command permission object for a user.",
+              "type": "object",
+              "required": ["id", "type", "permission"],
+              "properties": {
+                "id": {
+                  "description": "The user ID.",
+                  "type": "string",
+                  "pattern": "^\\d{18}$"
+                },
+                "type": {
+                  "description": "Specify the command permission type.",
+                  "type": "string",
+                  "const": "user"
+                },
+                "permission": {
+                  "description": "True to allow, false, to disallow.",
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "description": "A Command permission object for a role",
+              "type": "object",
+              "required": ["name", "type", "permission"],
+              "properties": {
+                "name": {
+                  "description": "A Command permission object for a user.",
+                  "type": "string"
+                },
+                "type": {
+                  "description": "Specify the command permission type.",
+                  "type": "string",
+                  "const": "role"
+                },
+                "permission": {
+                  "description": "True to allow, false, to disallow.",
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        }
+      }
+    }
+  },
+  "additionalProperties": false
 }

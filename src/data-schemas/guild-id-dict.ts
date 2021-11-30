@@ -1,5 +1,5 @@
 import type { Snowflake } from 'discord.js'
-import { JSONSchemaType } from 'ajv'
+import type { JSONSchemaType } from 'ajv'
 
 export const data: Readonly<Partial<Record<string, Snowflake>>> = {}
 export const schema: JSONSchemaType<typeof data> = {

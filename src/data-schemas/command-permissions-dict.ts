@@ -1,6 +1,7 @@
 import type { APIApplicationCommandPermission } from 'discord-api-types/v9'
+import type { JSONSchemaType } from 'ajv'
+
 import { ApplicationCommandPermissionType } from 'discord-api-types/v9'
-import { JSONSchemaType } from 'ajv'
 import { makeNameObjMap } from '../common/util'
 
 export const enum CommandPermissionsKey {

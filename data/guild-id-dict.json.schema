@@ -1,10 +1,10 @@
 {
-    "description": "Map guild keys to the corresponding guild IDs.",
-    "type": "object",
-    "required": [],
-    "additionalProperties": {
-        "description": "The corresponding guild ID.",
-        "type": "string",
-        "pattern": "^\\d{18}$"
-    }
+  "description": "Map guild keys to the corresponding guild IDs.",
+  "type": "object",
+  "required": [],
+  "additionalProperties": {
+    "description": "The corresponding guild ID.",
+    "type": "string",
+    "pattern": "^\\d{18}$"
+  }
 }
